@@ -1,0 +1,29 @@
+-- 1. Установите vclang, следуя инструкциям на странице https://arend.top/getting-started/
+
+-- 2. Определите аналоги следующих функций на языке хаскелл.
+{- Haskell:
+   second :: Nat -> Nat -> Nat -> Nat
+   second _ y _ = y
+
+   apply :: (Nat -> Nat) -> Nat -> Nat
+   apply f x = f x
+   
+   compose :: (Nat -> Nat) -> (Nat -> Nat) -> Nat -> Nat
+   compose f g x = f (g x)
+   
+   flip :: (Nat -> Nat -> Nat) -> Nat -> Nat -> Nat
+   flip f x y = f y x
+   
+   second' = flip (second 0)
+-}
+
+-- 3. Расставьте приоритеты функций f1, f2, f3, f4, f5 и f6 так, чтобы функция test проходила тайпчекинг.
+
+\func f1 (x y : Nat) => x
+\func f2 : Nat => 0
+\func f3 (f : Nat -> Nat) (z : Nat) : Int => 0
+\func f4 : Nat => 0
+\func f5 => f1
+\func f6 => f4
+
+\func test => f1 f2 f3 f4 f5 f6
