@@ -1,0 +1,372 @@
+-- 1. Bool, not, ||, if then else
+
+\data Bool | false | true -- имена типов данных и конструкторов могут начинаться с любой буквы в отличии от хаскелла.
+{- Haskell:
+   data Bool = False | True
+-}
+
+\func not (x : Bool) : Bool -- \with
+  | true => false
+  | false => true
+{- Haskell:
+   not :: Bool -> Bool
+   not True = False
+   not False = True
+-}
+
+\func if (x : Bool) (t e : Nat) : Nat \elim x
+  | true => t
+  | false => e
+{- Haskell:
+   if :: Bool -> Nat -> Nat -> Nat
+   if True t e = t
+   if False t e = e
+-}
+
+\func example (x y a b c d : Bool) : Bool \elim x, y
+  | true, true => {?}
+  | true, false => {?}
+  | false, y => \case y, a \with { | true, a => {?} | false, a => {?} }
+{- Haskell:
+   example True True a b c d = undefined
+   example True False a b c d = undefined
+   example False y a b c d = case (y,a) of
+        True, a -> undefined
+        False, a -> undefined
+-}
+
+\func \infixr 3 && (x y : Bool) : Bool \elim x
+  | true => y
+  | false => false
+{- Haskell:
+   (&&) :: Bool -> Bool -> Bool
+   True && y = y
+   True && _ = False
+-}
+
+-- 2. Nat, +, *
+
+\data Nat' | zero' | suc' Nat' -- уже определено в Prelude
+
+-- такое представление более эффективно, но не так удобно для доказательств.
+\data BinNat
+    | zero''
+    | sh+1 BinNat -- x*2+1
+    | sh+2 BinNat -- x*2+2
+
+-- эти определения эквивалентны
+\func three => suc (suc (suc zero))
+\func three' => 3
+
+-- нет ограничений на величину чисел
+\func bigNumber => 1000000000000000000000000
+
+\func \infixl 6 + (x y : Nat) : Nat \elim y
+  | 0 => x
+  | suc y => suc (x + y)
+{- Haskell:
+   (+) :: Nat -> Nat -> Nat
+   x + Zero = x
+   x + Suc y = Suc (x + y)
+-}
+
+-- если n -- переменная, то n + 2 вычисляется, а 2 + n уже находится в нормальной форме.
+-- n + 2 => suc (suc n)
+-- 2 + n
+-- то есть важно как определен + и на каком аргументе производится паттерн матчинг.
+
+\func \infixl 7 * (x y : Nat) : Nat \elim y
+  | 0 => 0
+  | suc y => x * y + x
+{- Haskell:
+   (*) :: Nat -> Nat -> Nat
+   x * Zero = 0
+   x * Suc y = x * y + x
+-}
+
+-- выражения n * 2 и 2 * n не вычисляются в конструкторы
+-- n * 2 === n * suc (suc zero) => n * 1 + n => (n * 0 + n) + n => (0 + n) + n
+-- 2 * n
+-- выражения suc n * 2 и 2 * suc n вычисляются, но 2 * suc n вычисляется лучше
+-- suc n * 2 => (0 + suc n) + suc n => suc ((0 + suc n) + n)
+-- 2 * suc n => 2 * n + 2 => suc (suc (2 * n))
+
+-- 3. Termination, div
+
+-- все функции должны завершаться
+-- \func f : Nat => f
+
+\func \infixl 6 - (x y : Nat) : Nat
+  | 0, _ => 0
+  | suc x, 0 => suc x
+  | suc x, suc y => x - y
+
+\func \infix 4 < (x y : Nat) : Bool
+  | 0, 0 => false
+  | 0, suc y => true
+  | suc x, 0 => false
+  | suc x, suc y => x < y
+
+-- Очевидное, но не корректное определение div, так как оно не завершается на входе вида div x 0.
+-- \func div (x y : Nat) : Nat => if (x < y) 0 (suc (div (x - y) y))
+-- Даже если бы div завершалась, это определение не было бы корректным, так как рекурсивная функция принимаются только если она определена при помощи структурной рекурсии.
+-- То есть один из аргументов в рекурсивном вызове должен быть структурно строго меньше, чем исходный аргумент, а остальные меньше либо равны.
+
+-- Часто рекурсивную функцию можно превратить в структурно рекурсивную, добавив новый параметр, который будет уменьшаться при каждом рекурсивном вызове.
+-- В начальный момент времени его можно задать любым образом так, чтобы он был больше, чем глубина рекурсии, необходимая для вычисления этой функции.
+-- Например, глубина рекурсии при вычислении div x y составляет x/y шагов, что меньше либо равно x, так что можно эту функцию определить следующим образом:
+\func div (x y : Nat) => div' x x y
+  \where
+    \func div' (s x y : Nat) : Nat \elim s
+        | 0 => 0
+        | suc s => if (x < y) 0 (suc (div' s (x - y) y))
+
+-- Таким образом можно протестировать нашу функцию.
+\func divTest1 : div 100 5 = 20 => idp
+\func divTest2 : div 100 3 = 33 => idp
+\func divTest3 : div 100 1 = 100 => idp
+\func divTest4 : div 100 0 = 100 => idp
+
+-- 4. Полиморфизм, id, неявные аргументы
+
+-- \Type -- тип типов.
+\func id (A : \Type) (a : A) => a
+{- Haskell:
+   id :: a -> a
+   id x = x
+-}
+
+-- _ говорит тайпчекеру вывести значение самому.
+-- Если он не сможет этого сделать, он выдаст ошибку.
+-- В данном случае он выводит Nat, так как он знает, что первый параметр является типом второго, а второй имеет тип Nat.
+\func idTest => id _ 0
+
+-- Параметры в фигурных скобках являются неявными.
+\func id' {A : \Type} (a : A) => a
+
+\func id'Test => id' 0
+\func id'Test' => id' {Nat} 0 -- неявные параметры можно передавать явно, взяв аргумент в фигурные скобки.
+
+-- В данном случае лучше n не делать неявным, так как тайпчекер не сможет его вывести из типа p, так как n встречается только внутри вызова функции.
+-- Например, если мы вызовем example' pp, где pp : 8 = 3, то тайпчекер не может вывести, что n должно равняться 4.
+\func example' {n : Nat} (p : n + n = 3) => 0
+
+-- В данном случае n и m можно сделать неявнымы, так как они встречается только под \data (= определено через Path, который является \data) и конструктором (suc).
+-- \data и конструкторы являются инъективными, поэтому тайпчекер всегда может вывести n и m в таких случаях.
+-- Например, если мы вызовем example'' pp, где pp : 8 = 3, то тайпчекер понимает, что m должно равняться 3, а suc n должно равняться 8.
+-- Так как 8 = suc 7 и suc инъективен, то он понимает, что n должно равняться 7.
+\func example'' {n m : Nat} (p : suc n = m) => 0
+\func example''Test (pp : 8 = 3) => example'' pp
+
+-- 5. Списки, append
+
+\data List (A : \Type) | nil | cons A (List A)
+{- Haskell:
+   data List a = Nil | Cons a (List a)
+-}
+
+\func \infixl 6 ++ {A : \Type} (xs ys : List A) : List A \elim ys
+  | nil => xs
+  | cons y ys => cons y (xs ++ ys)
+{- Haskell:
+   (++) :: List a -> List A -> List a
+   xs ++ Nil = xs
+   xs ++ cons y ys = cons y (xs ++ ys)
+-}
+
+-- 6. Пустой и одноэлементный типы, пары и \Sigma-типы.
+
+-- Одноэлементный тип соответствует истинному утверждению.
+\data Unit | unit
+
+-- Доказательство, что Unit верно.
+\func Unit-proof : Unit => unit
+
+-- Пустой тип соответствует ложно утверждению.
+\data Empty
+
+-- Доказательство, что из Empty следует что угодно.
+\func absurd {A : \Type} (e : Empty) : A
+
+-- \Sigma-тип эквивалентен очевидно определению пар.
+-- \Sigma Nat Nat === \data Pair | pair Nat Nat
+{- Haskell:
+   (Nat,Nat) === data Pair = Pair Nat Nat
+-}
+
+\func pair : \Sigma Nat Nat => (0,1)
+{- Haskell:
+   pair :: (Nat,Nat)
+   pair = (0,1)
+-}
+
+-- Проекции обозначаются p.1 и p.2:
+
+\func projSum (p : \Sigma Nat Nat) => p.1 + p.2
+{- Haskell:
+   projSum :: (Nat,Nat) -> Nat
+   projSum p = fst p + snd p
+-}
+
+-- Есть зависимая версия \Sigma-типов, где типы последующих полей могут зависеть от предыдущих.
+-- Например, элементы следующего \Sigma-типа -- это пары из натурального числа n и элемента типа n = n (т.е. доказательства, что n равно n).
+-- \Sigma (n : Nat) (n = n) === \data Pair' | pair' (n : Nat) (n = n)
+
+-- Одноэлементный тип -- частный случай \Sigma-типов.
+\func unit'' : \Sigma => ()
+{- Haskell:
+   unit'' :: ()
+   unit'' = ()
+-}
+
+-- 7. Пример утверждений и доказательств.
+
+-- Функция T превращает булевское значение в соответствующее ему утверждение (одноэлементный или пустой тип).
+\func T (b : Bool) : \Type
+  | true => Unit
+  | false => Empty
+
+\func \infix 4 == (x y : Bool) : Bool
+  | true, true => true
+  | false, false => true
+  | _, _ => false
+
+-- Утверждение T (not (not x) == x) соответствует утверждению, что not (not x) равно x.
+-- Доказывается разбором случаев.
+\func not-isInvolution (x : Bool) : T (not (not x) == x)
+  | true => unit -- Если x равно true, то T (not (not x) == x) вычисляется в Unit. Так что мы можем вернуть unit.
+  | false => unit -- Если x равно false, то происходит то же самое. Так что мы снова возвращаем unit.
+
+-- Мы не можем сразу вернуть unit, так как T (not (not x) == x) не равно Unit.
+-- \func not-isInvolution' (x : Bool) : T (not (not x) == x) => unit
+
+-- Мы не можем доказать ложное утверждение таким образом.
+\func not-isIdempotent (x : Bool) : T (not (not x) == not x)
+  | true => {?} -- Здесь нужно доказать Empty.
+  | false => {?} -- Здесь аналогично. Так как Empty -- пустой тип (aka ложное утверждение), то невозможно сконструировать его элемент (т.е. доказать его).
+
+-- Доказательство рефлексивности равенства аналогично not-isInvolution.
+\func ==-refl (x : Bool) : T (x == x)
+  | true => unit
+  | false => unit
+
+-- -> -- это независимые функции.
+-- Например, && имеет тип Bool -> Bool -> Bool.
+-- \Pi-типы обощают их.
+-- Например, ==-refl имеет тип \Pi (x : Bool) -> T (x == x).
+-- Если переменная объявленная в \Pi не используется, мы получаем обычный тип функций.
+-- Например, тип Bool -> Bool -> Bool эквивалентен типу \Pi (_ _ : Bool) -> Bool.
+
+-- Докажем, что для любого x : Bool существует y : Bool такой, что x == y.
+-- Вместо квантора существования можно использовать \Sigma-тип.
+\func lemma (x : Bool) : \Sigma (y : Bool) (T (x == y)) => (x, ==-refl x)
+
+-- Следующая функция доказывает довольно бессмысленное утверждение "из того, что любой x : Bool равен себе, следует, что true равен true".
+\func higherOrderFunc (f : \Pi (x : Bool) -> T (x == x)) => f true
+
+-- 8. Тип равенств.
+
+-- Определять равенство так, как мы это делали выше, не удобно, так как нужно делать это для каждого типа и доказывать потом различные его свойства.
+-- В Prelude объявлен тип равенства, который определен для всех типов сразу.
+-- Пока мы не будем рассматривать его определение.
+-- Всё, что нам понадобится пока, -- это доказательство рефлексивности, которое мы называем idp.
+\func idp {A : \Type} {a : A} : a = a => path (\lam _ => a)
+
+-- Доказать, что not является инволюцией можно также как и раньше.
+\func not-isInvolution_ (x : Bool) : not (not x) = x
+  | true => idp
+  | false => idp
+
+-- Доказать ложное утверждение мы всё еще не можем.
+\func not-isIdempotent_ (x : Bool) : not (not x) = not x
+  | true => {?} -- Здесь нужно доказать, что true = false, что невозможно.
+  | false => {?} -- Здесь нужно доказать, что false = true, что невозможно.
+
+-- Доказательства других двух утверждений, доказанных ранее, выглядят аналогично.
+\func lemma_ (x : Bool) : \Sigma (y : Bool) (x = y) => (x,idp)
+
+\func higherOrderFunc_ (f : \Pi (x : Bool) -> x = x) => f true
+
+-- 9. Синонимы типов.
+
+-- В языке с зависимыми типами не нужны синонимы типов, т.к. мы можем просто определить функцию, возвращающую нужный тип.
+\func NatList => List Nat
+{- Haskell:
+   type NatList = List Nat
+-}
+
+-- 10. Пространства имен и модули.
+
+-- \where в отличии от хаскелла относится не к отдельной клозе, а ко всему определению.
+\func fff => 0 \where \func ggg => 0
+-- Функции, определенные в \where, почти ничем не отличаются от обычных функций.
+-- Единственное отличие заключается в том, что они находятся в другом пространстве имен.
+\func gggTest => fff.ggg
+
+-- Сноска
+-- Можно использовать \let, который несколько проще, чем в хаскелле.
+-- В vclang нельзя определять рекурсивные функции в \let и переменные могут ссылаться только на предыдущие переменные.
+\func letExample => \let
+    | x => 1
+    | y => x + x
+    \in x + y * y
+
+-- Модули используются для группирования определений.
+\module M1 \where {
+    \func f => 82
+    \func g => 77
+    \func h => 25
+}
+
+-- Определения f, g и h недоступны в текущем простраснтве имен.
+-- К ним нужно обращаться через M1.
+\func moduleTest => (M1.f,M1.g,M1.h)
+
+\module M2 \where {
+    -- Если открыть модуль, то можно обращаться к его содержимому напрямую.
+   \open M1
+   \func t => f
+   \func t' => g
+   \func t'' => h
+}
+
+\module M3 \where {
+    -- Можно открыть только часть определений в модуле.
+   \open M1(f,g)
+   \func t => f
+   \func t' => g
+   \func t'' => M1.h -- К остальным определениям всё ещё можно доступаться по полному имени.
+}
+
+\module M4 \where {
+    -- Каждому определению тоже соответствует модуль.
+   \func functionModule => 34
+     \where {
+       \func f1 => 42
+       \func f2 => 61
+       \func f3 => 29
+     }
+   \func t => functionModule.f1
+   \func t' => functionModule.f2
+   \func t'' => (f1, f3)
+     \where \open functionModule(f1,f3) -- данный \open относится ко всему, что объявленно в \where-блоке для t'', а также к самому t''.
+}
+
+\module M5 \where {
+    -- Если определения в двух модулях повторяются, то можно их либо скрыть, либо переименовать.
+    \open M2 \hiding (t') -- открыть все определения кроме t'
+    \open M3 (t \as M3_t) -- открыть только t, переименовав в M3_t.
+    \open M4 \using (t \as M4_t) -- открыть все определения, переименовав t в M4_t.
+    \func t'' => (M3_t, M4_t, t', t, functionModule, functionModule.f1, functionModule.f2, functionModule.f3)
+    \func t''' => (t'', M2.t'', M4.t'') -- t'' в текущем модуле перекрывает t'' из M2 и M4, но к ним всё ещё можно доступаться по полному имени.
+}
+
+-- \import X делает файл X видимым в текущем файле.
+-- Также \import делает \open.
+-- Все конструкции, которые есть для \open, также доступны для \import.
+\import Test (foobar \as foobar', foobar3)
+\import TestDir.Test
+-- Если нужно только сделать файл видимым, но не открывать его содержимое, можно использовать следующую конструкцию:
+\import TestDir.Test2()
+
+\func fileTest => (foobar, foobar', Test.foobar1, Test.foobar2, Test.foobar3, TestDir.Test2.foobar)
