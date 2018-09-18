@@ -1,0 +1,40 @@
+\open Nat
+
+-- 1. Эффективность реализации функций над целыми числами.
+
+{-
+\import lect02
+
+\func mod (x y : Nat) : Nat => mod' x x y
+  \where \func mod' (f x y : Nat) : Nat \elim f
+    | 0 => 0
+    | suc f => if (not (x < y)) (mod' f (x - y) y) x
+
+\func gcd1 (x y : Nat) => gcd' x x y
+    \where
+    \func gcd' (s x y : Nat) : Nat \elim s
+        | 0 => 0
+        | suc s => if (y < 1) x (gcd' s y (mod x y))
+
+\func gcd2 (x y : Nat) : Nat => gcd' x x y
+  \where \func gcd' (s x y : Nat) : Nat \elim s, y
+    | 0, _ => 0
+    | _, 0 => x
+    | suc s, y => gcd' s y (mod x y)
+-}
+
+-- 2. Паттерн матчинг или \case?
+
+-- 3. Какая самая лучшая сортировка?
+
+-- 4. Еще примеры утверждений и доказательств: ассоциативность сложения натуральных чисел, инволютивность reverse.
+
+-- 5. Определить vec рекурсивно, head, tail.
+
+-- 6. Определить Vec индуктивно, head, tail, append, length.
+
+\data Vec
+
+-- 7. Fin, toNat, lookup.
+
+\data Fin Nat
