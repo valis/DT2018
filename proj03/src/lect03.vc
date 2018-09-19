@@ -10,6 +10,8 @@
     | 0 => 0
     | suc f => if (not (x < y)) (mod' f (x - y) y) x
 
+-- Второе определение gcd работает более эффективно.
+-- Причина, вероятно, заключается в том, что второе определение использует хвостовую рекурсию, которая в языках с ленивой семантикой работает более эффективно.
 \func gcd1 (x y : Nat) => gcd' x x y
     \where
     \func gcd' (s x y : Nat) : Nat \elim s
@@ -23,18 +25,120 @@
     | suc s, y => gcd' s y (mod x y)
 -}
 
--- 2. Паттерн матчинг или \case?
+-- 2. \elim или \case?
+
+-- Функции f и f' эквивалентны, но в данной ситуации лучше использовать f', так как выражение вида f' n является нормальной формой, а выражение f n раскрывается в определение f, что менее удобно.
+\func f (x : Nat) : Nat => \case x \with { zero => 0 | suc n => n }
+\func f' (x : Nat) : Nat | zero => 0 | suc n => n
+\func g (n : Nat) => f' n
 
 -- 3. Какая самая лучшая сортировка?
 
+\data Bool | true | false
+\data List (A : \Type) | nil | cons A (List A)
+
+\func if {A : \Type} (b : Bool) (t e : A) : A \elim b
+  | true => t
+  | false => e
+
+-- Сортировку вставками написать проще всего.
+-- Чем проще определена функция, тем проще доказывать ее свойства.
+\func sort {A : \Type} (less : A -> A -> Bool) (xs : List A) : List A \elim xs
+  | nil => nil
+  | cons x xs => insert less x (sort xs)
+  \where
+    \func insert {A : \Type} (less : A -> A -> Bool) (x : A) (xs : List A) : List A \elim xs
+      | nil => cons x nil
+      | cons x' xs => if (less x x') (cons x (cons x' xs)) (cons x' (insert x xs))
+
 -- 4. Еще примеры утверждений и доказательств: ассоциативность сложения натуральных чисел, инволютивность reverse.
 
--- 5. Определить vec рекурсивно, head, tail.
+-- Рефлексивность: a = a.
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
 
--- 6. Определить Vec индуктивно, head, tail, append, length.
+-- Конгруэнтность: если a = a', то f a = f a'.
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a'
+  => path (\lam i => f (p @ i))
 
-\data Vec
+-- Ассоциативность + доказывается индукцией по z (так как + определен рекурсией по правому аргументу).
+\func +-assoc (x y z : Nat) : (x + y) + z = x + (y + z) \elim z
+  | zero => idp
+  | suc z => pmap suc (+-assoc x y z)
+
+-- Если определить функцию reverse через вспомогательную функцию с аккумулятором, то потом будет проще доказывать ее свойства.
+\func reverse {A : \Type} (xs : List A) : List A => rev nil xs
+  \where
+    \func rev {A : \Type} (acc xs : List A) : List A \elim xs
+      | nil => acc
+      | cons x xs => rev (cons x acc) xs
+
+-- reverse (cons x xs) => rev nil (cons x xs) => rev (cons x nil) xs
+-- reverse (reverse (cons x xs)) => reverse (rev (cons x nil) xs) => rev nil (rev (cons x nil) xs)
+--
+-- Если попытаться доказать напрямую, что reverse (reverse xs) = xs, то нам нужно будет доказать, что rev nil (rev (cons x nil) xs) = cons x xs, но сделать это, используя индукционную гипотезу, не получится.
+-- Нужно усилить утверждение, чтобы индукционная гипотеза тоже была бы более сильной.
+-- Другими словами, мы будем доказывать более общее свойство reverse.rev, а через него уже свойство reverse.
+
+\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => rev-isInvolutive nil xs
+  \where
+    \func rev-isInvolutive {A : \Type} (acc xs : List A)
+      : reverse (reverse.rev acc xs) = reverse.rev xs acc \elim xs
+
+      | nil => idp
+      | cons x xs => rev-isInvolutive (cons x acc) xs
+
+-- 5. Рекурсивное определение vec, head, tail.
+
+\func vec (A : \Type) (n : Nat) : \Type \elim n
+  | 0 => \Sigma
+  | suc n => \Sigma A (vec A n)
+
+\func head {A : \Type} (n : Nat) (xs : vec A (suc n)) => xs.1
+
+\func tail {A : \Type} (n : Nat) (xs : vec A (suc n)) => xs.2
+
+-- 6. Индуктивное определиние Vec, head, tail, append, length.
+
+\data Vec (A : \Type) (n : Nat) \elim n
+  | 0 => fnil
+  | suc n => fcons A (Vec A n)
+
+\func Head {A : \Type} {n : Nat} (xs : Vec A (suc n)) : A \elim xs
+  | fcons x _ => x
+
+\func Tail {A : \Type} {n : Nat} (xs : Vec A (suc n)) : Vec A n \elim xs
+  | fcons _ xs => xs
+
+\func append {A : \Type} {n m : Nat} (xs : Vec A n) (ys : Vec A m) : Vec A (m + n) \elim n, xs
+  | 0, fnil => ys
+  | suc _, fcons x xs => fcons x (append xs ys)
+
+-- Очень полезная функция.
+\func length {A : \Type} {n : Nat} (xs : Vec A n) => n
 
 -- 7. Fin, toNat, lookup.
 
-\data Fin Nat
+-- Тип n-элементных множеств можно определить различными способами.
+-- Например, мы можем определить его как подтип натуральных чисел:
+-- \func fin (n : Nat) => \Sigma (x : Nat) (T (x < n))
+
+-- Еще его можно определить индуктивно:
+\data Fin (n : Nat) \with
+  | suc n => { fzero | fsuc (Fin n) }
+
+-- Fin 0 -- пустой тип.
+\func absurd {A : \Type} (x : Fin 0) : A
+
+\func fin0 : Fin 3 => fzero
+\func fin1 : Fin 3 => fsuc fzero
+\func fin2 : Fin 3 => fsuc (fsuc fzero)
+-- \func fin3 : Fin 3 => fsuc (fsuc (fsuc fzero))
+
+\func toNat {n : Nat} (x : Fin n) : Nat
+  | {suc _}, fzero => 0
+  | {suc _}, fsuc x => suc (toNat x)
+
+-- Безопасный lookup.
+\func lookup {A : \Type} {n : Nat} (xs : Vec A n) (i : Fin n) : A \elim n, xs, i
+  | suc _, fcons x _, fzero => x
+  | suc _, fcons _ xs, fsuc i => lookup xs i
