@@ -165,13 +165,13 @@
    data List a = Nil | Cons a (List a)
 -}
 
-\func \infixl 6 ++ {A : \Type} (xs ys : List A) : List A \elim ys
-  | nil => xs
-  | cons y ys => cons y (xs ++ ys)
+\func \infixl 6 ++ {A : \Type} (xs ys : List A) : List A \elim xs
+  | nil => ys
+  | cons x xs => cons x (xs ++ ys)
 {- Haskell:
    (++) :: List a -> List A -> List a
-   xs ++ Nil = xs
-   xs ++ cons y ys = cons y (xs ++ ys)
+   Nil ++ ys = ys
+   cons x xs ++ ys = cons x (xs ++ ys)
 -}
 
 -- 6. Пустой и одноэлементный типы, пары и \Sigma-типы.
