@@ -45,11 +45,11 @@
 -- Чем проще определена функция, тем проще доказывать ее свойства.
 \func sort {A : \Type} (less : A -> A -> Bool) (xs : List A) : List A \elim xs
   | nil => nil
-  | cons x xs => insert less x (sort xs)
+  | cons x xs => insert less x (sort less xs)
   \where
     \func insert {A : \Type} (less : A -> A -> Bool) (x : A) (xs : List A) : List A \elim xs
       | nil => cons x nil
-      | cons x' xs => if (less x x') (cons x (cons x' xs)) (cons x' (insert x xs))
+      | cons x' xs => if (less x x') (cons x (cons x' xs)) (cons x' (insert less x xs))
 
 -- 4. Еще примеры утверждений и доказательств: ассоциативность сложения натуральных чисел, инволютивность reverse.
 
