@@ -1,0 +1,54 @@
+\import lect04
+\open Nat
+
+-- 1. Определите конгруэнтность для функций двух аргументов через transport.
+
+\func pmap2 {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' => {?}
+
+-- 2. Докажите, что transport выражается через pmap и repl и наоборот.
+
+-- Определение pmap через transport было дано на лекции.
+
+-- repl говорит, что если у нас есть два равных типа, то у нас есть функция из одного во второй.
+-- Определите repl через transport.
+
+\func repl {A B : \Type} (p : A = B) (a : A) : B => {?}
+
+-- Определите transport через repl и pmap.
+
+\func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => {?}
+
+-- 3. Докажите дистрибутивность умножения над сложением для натуральных чисел.
+
+\func distr (n m k : Nat) : n * (m + k) = n * m + n * k => {?}
+
+-- 4. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
+
+\func \infixl 4 ++ {A : \Type} (xs ys : List A) : List A \elim xs
+  | nil => ys
+  | cons x xs => cons x (xs ++ ys)
+
+\func reverse {A : \Type} (xs : List A) : List A
+  | nil => nil
+  | cons x xs => reverse xs ++ cons x nil
+
+-- Это утверждение будет полезно для доказательства.
+\func reverse++ {A : \Type} (xs ys : List A) : reverse (xs ++ ys) = reverse ys ++ reverse xs => {?}
+
+\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
+
+-- 5. Докажите, что vnil является нейтральным элементом для v++.
+
+\func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs => {?}
+
+-- 6. Докажите, что 0 не равно suc x.
+
+\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
+
+-- 7. Докажите, что fac не равен suc.
+
+\func fac (n : Nat) : Nat
+  | 0 => 1
+  | suc n => suc n * fac n
+
+\func fac/=suc (p : fac = suc) : Empty => {?}

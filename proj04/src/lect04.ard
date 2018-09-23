@@ -1,0 +1,71 @@
+\open Nat
+
+-- 1. Определение T, асбурдные паттерны.
+
+\data Bool | true | false
+
+\data Unit | unit
+
+\data Empty
+
+\func absurd {A : \Type} (p : Empty) : A
+
+\data T (b : Bool) \with
+  | true => tt Unit
+  | false => tf Empty
+
+\func \infix 4 < (x y : Nat) : Bool
+  | 0, 0 => false
+  | 0, suc y => true
+  | suc x, 0 => false
+  | suc x, suc y => x < y
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\func length {A : \Type} (xs : List A) : Nat
+  | nil => 0
+  | cons _ xs => length xs + 1
+
+\func lookup {A : \Type} (xs : List A) (n : Nat) (p : T (n < length xs)) : A \elim xs, n, p
+  | nil, 0, tf e => absurd e
+  | nil, suc n, tf e => absurd e
+  | cons x xs, 0, _ => x
+  | cons x xs, suc n, p => lookup xs n p
+
+-- 2. Определение Tree.
+
+-- 3. Строго положительные определения \data.
+
+-- 4. Симметричность, транзитивность, принцип Лейбница, pmap через него.
+
+\func idp {A : \Type} {a : A} : a = a => path (\lam _ => a)
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => coe (\lam i => B (p @ i)) b right
+
+-- 5. Коммутативность сложения.
+
+\func +-comm (n m : Nat) : n + m = m + n => {?}
+
+-- 6. Equational reasoning, коммутивность сложения через него.
+
+\func \infix 2 qed {A : \Type} (a : A) : a = a => idp
+
+\func \infixr 1 >== {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') => {?}
+
+\func \infix 2 ==< {A : \Type} (a : A) {a' : A} (p : a = a') => p
+
+-- 7. Ассоциативность ++ для векторов.
+
+\data Vec (A : \Type) (n : Nat) \elim n
+  | zero => vnil
+  | suc n => vcons A (Vec A n)
+
+\func \infixl 4 v++ {A : \Type} {n m : Nat} (xs : Vec A n) (ys : Vec A m) : Vec A (m + n) \elim n, xs
+  | 0, vnil => ys
+  | suc n, vcons x xs => vcons x (xs v++ ys)
+
+-- \func v++-assoc {A : \Type} {n m k : Nat} (xs : Vec A n) (ys : Vec A m) (zs : Vec A k) : (xs v++ ys) v++ zs = xs v++ (ys v++ zs) => {?}
+
+-- 8. Доказательства неравенств.
+
+\func true/=false (p : true = false) : Empty => {?}
