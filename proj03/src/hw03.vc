@@ -3,8 +3,8 @@
 -- 1. Докажите ассоциативность ++.
 
 \func \infixr 5 ++ {A : \Type} (xs ys : List A) : List A \elim xs
-  | fnil => ys
-  | fcons x xs => fcons x (xs ++ ys)
+  | nil => ys
+  | cons x xs => cons x (xs ++ ys)
 
 \func ++-assoc {A : \Type} (xs ys zs : List A) : (xs ++ ys) ++ zs = xs ++ (ys ++ zs) => {?}
 
