@@ -1,6 +1,7 @@
 \import lect04
 
 -- 1. Определите конгруэнтность для функций двух аргументов через transport.
+--    Можно использовать любые функции, определенные через transport.
 
 \func pmap2 {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' => {?}
 
@@ -35,19 +36,17 @@
 
 \func pmap2' {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' => {?}
 
--- 7. Определите функцию B left -> B right.
+-- 7. Мы видели как определить transport через coe. Определите частный случай coe через transport.
+--    Можно ли определить transport через coe0?
+--    Верно ли, что эти конструкции взаимообратны в том смысле что, если мы построим transport по coe, а потом coe0 по transport, то получим исходный (частный случай) coe? Верно ли, что они взаимообратны в обратную сторону.
 
-\func Itr {B : I -> \Type} (b : B left) : B right => {?}
+\func coe0 (A : I -> \Type) (a : A left) : A right => {?}
 
 -- 8. Определите функцию B right -> B left.
 
 \func Itr' {B : I -> \Type} (b : B right) : B left => {?}
 
--- 9. Мы видели как определить transport через coe. Определите coe через transport. Взаимообратны ли эти конструкции?
-
-\func coe' (A : I -> \Type) (a : A left) (i : I) : A i => {?}
-
--- 10. Докажите, что (\lam x => not (not x)) = (\lam x => x).
+-- 9. Докажите, что (\lam x => not (not x)) = (\lam x => x).
 
 \func not (b : Bool) : Bool
   | true => false
