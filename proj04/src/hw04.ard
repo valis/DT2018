@@ -18,11 +18,15 @@
 
 \func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => {?}
 
--- 3. Докажите дистрибутивность умножения над сложением для натуральных чисел.
+-- 3. Мы доказали, что left = right через coe. Докажите это, не используя эту функцию.
+
+\func left=right : left = right => {?}
+
+-- n3. Докажите дистрибутивность умножения над сложением для натуральных чисел.
 
 \func distr (n m k : Nat) : n * (m + k) = n * m + n * k => {?}
 
--- 4. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
+-- n4. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
 
 \func \infixl 4 ++ {A : \Type} (xs ys : List A) : List A \elim xs
   | nil => ys
@@ -37,15 +41,15 @@
 
 \func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
 
--- 5. Докажите, что vnil является нейтральным элементом для v++.
+-- n5. Докажите, что vnil является нейтральным элементом для v++.
 
 \func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs => {?}
 
--- 6. Докажите, что 0 не равно suc x.
+-- n6. Докажите, что 0 не равно suc x.
 
 \func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
 
--- 7. Докажите, что fac не равен suc.
+-- n7. Докажите, что fac не равен suc.
 
 \func fac (n : Nat) : Nat
   | 0 => 1

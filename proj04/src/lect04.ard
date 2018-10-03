@@ -8,17 +8,17 @@
 
 \data Empty
 
-\func absurd {A : \Type} (p : Empty) : A
+\func absurd' {A : \Type} (p : T false) : A
 
 \data T (b : Bool) \with
-  | true => tt Unit
-  | false => tf Empty
+  | true => tt
 
 \func \infix 4 < (x y : Nat) : Bool
-  | 0, 0 => false
+  | _, 0 => false
   | 0, suc y => true
-  | suc x, 0 => false
   | suc x, suc y => x < y
+
+-- n < 0
 
 \data List (A : \Type) | nil | cons A (List A)
 
@@ -27,20 +27,94 @@
   | cons _ xs => length xs + 1
 
 \func lookup {A : \Type} (xs : List A) (n : Nat) (p : T (n < length xs)) : A \elim xs, n, p
-  | nil, 0, tf e => absurd e
-  | nil, suc n, tf e => absurd e
+  | nil, 0, ()
+  | nil, suc n, ()
   | cons x xs, 0, _ => x
   | cons x xs, suc n, p => lookup xs n p
 
 -- 2. Определение Tree.
 
+\data Tree (A : \Type) (n : Nat) \elim n
+  | _ => Leaf
+  | suc n => Branch A (Tree A n) (Tree A n)
+
 -- 3. Строго положительные определения \data.
+
+{-
+-- Nat = 1 + Nat
+\data Nat | zero | suc Nat
+
+-- D = D -> D
+\data D | con (D -> D)
+
+-- \lam d => d d
+\func omega (d : D) : D
+  | con f => f (con f)
+
+-- Omega = omega omega
+\func Omega => omega (con omega)
+-}
 
 -- 4. Симметричность, транзитивность, принцип Лейбница, pmap через него.
 
+\func Leibneiz {A : \Type} {a a' : A}
+  (f : \Pi (P : A -> \Type) -> \Sigma (P a -> P a') (P a' -> P a)) : a = a'
+  => (f (\lam x => a = x)).1 idp
+
 \func idp {A : \Type} {a : A} : a = a => path (\lam _ => a)
 
-\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => coe (\lam i => B (p @ i)) b right
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a'
+    => path (\lam i => f (p @ i))
+-- p : I -> A
+-- f : A -> B
+
+-- path (f : I -> A) : f left = f right
+-- @ (p : a = a') (i : I) : A
+-- path f @ i => f i
+-- path (\lam i => p @ i) => p
+
+\func pmap-idp {A : \Type} {a a' : A} (p : a = a') : pmap {A} (\lam x => x) p = p
+    => idp
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a'
+    => coe (\lam i => B (p @ i)) b right
+-- B' : I -> \Type
+-- B' left == B a
+-- B' right == B a'
+
+\func sym {A : \Type} {a a' : A} (p : a = a') : a' = a
+    => transport (\lam x => x = a) p idp
+
+\func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+    => transport (\lam x => a = x) q p
+
+\func pmap' {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a'
+    => transport (\lam x => f a = f x) p idp
+
+-- 4'. Функциональная экстенсиональность.
+
+-- \func axiom : \Pi (X : \Type) -> Either X (X -> Empty)
+
+-- \func foo : Nat => \case axiom Nat \with { | Left => 0 | Right => 1 }
+
+-- f, g : \Pi (a : A) -> B a
+-- p : \Pi (a : A) -> f a = g a
+-- ? : f = g
+
+\func funExt {A : \Type} (B : A -> \Type) {f g : \Pi (a : A) -> B a}
+    (p : \Pi (a : A) -> f a = g a) : f = g
+    => path (\lam i => \lam a => p a @ i)
+-- p : \Pi (a : A) -> I -> B a
+-- ? : I -> \Pi (a : A) -> B a
+-- i = left --> (\lam a => p a @ left) == (\lam a => f a) == f
+
+-- 4''. left = right
+
+\func left=i (i : I) : left = i
+  -- | left => idp
+  => coe (\lam i => left = i) idp i
+
+\func left=right : left = right => left=i right
 
 -- 5. Коммутативность сложения.
 
