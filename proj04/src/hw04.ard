@@ -1,5 +1,4 @@
 \import lect04
-\open Nat
 
 -- 1. Определите конгруэнтность для функций двух аргументов через transport.
 
@@ -18,41 +17,40 @@
 
 \func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => {?}
 
+-- В заданиях 3-6 нельзя использовать не только coe, но и все функции, определенные через него, в частнсоти transport.
+
 -- 3. Мы доказали, что left = right через coe. Докажите это, не используя эту функцию.
 
 \func left=right : left = right => {?}
 
--- n3. Докажите дистрибутивность умножения над сложением для натуральных чисел.
+-- 4. Докажите, что если a = a' и b = b', то (a,b) = (a',b'), не используя coe.
 
-\func distr (n m k : Nat) : n * (m + k) = n * m + n * k => {?}
+\func pairEq {A B : \Type} {a a' : A} {b b' : B} (p : a = a') (q : b = b') : (a,b) = (a',b') => {?}
 
--- n4. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
+-- 5. Докажите, что если p = p', то p.1 = p'.1, не используя coe.
 
-\func \infixl 4 ++ {A : \Type} (xs ys : List A) : List A \elim xs
-  | nil => ys
-  | cons x xs => cons x (xs ++ ys)
+\func projEq {A : \Type} (B : A -> \Type) (p p' : \Sigma (x : A) (B x)) (t : p = p') : p.1 = p'.1 => {?}
 
-\func reverse {A : \Type} (xs : List A) : List A
-  | nil => nil
-  | cons x xs => reverse xs ++ cons x nil
+-- 6. Докажите pmap2, не используя coe.
 
--- Это утверждение будет полезно для доказательства.
-\func reverse++ {A : \Type} (xs ys : List A) : reverse (xs ++ ys) = reverse ys ++ reverse xs => {?}
+\func pmap2' {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' => {?}
 
-\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
+-- 7. Определите функцию B left -> B right.
 
--- n5. Докажите, что vnil является нейтральным элементом для v++.
+\func Itr {B : I -> \Type} (b : B left) : B right => {?}
 
-\func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs => {?}
+-- 8. Определите функцию B right -> B left.
 
--- n6. Докажите, что 0 не равно suc x.
+\func Itr' {B : I -> \Type} (b : B right) : B left => {?}
 
-\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
+-- 9. Мы видели как определить transport через coe. Определите coe через transport. Взаимообратны ли эти конструкции?
 
--- n7. Докажите, что fac не равен suc.
+\func coe' (A : I -> \Type) (a : A left) (i : I) : A i => {?}
 
-\func fac (n : Nat) : Nat
-  | 0 => 1
-  | suc n => suc n * fac n
+-- 10. Докажите, что (\lam x => not (not x)) = (\lam x => x).
 
-\func fac/=suc (p : fac = suc) : Empty => {?}
+\func not (b : Bool) : Bool
+  | true => false
+  | false => true
+
+\func notNotId : (\lam x => not (not x)) = (\lam x => x) => {?}
