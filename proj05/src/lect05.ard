@@ -100,7 +100,8 @@
   -- Его определение пока не важно.
   => coe (\lam i => B (p @ i) (psqueeze p i)) b right
   \where {
-    \func squeeze (i j : I) => coe (\lam x => left = x) (path (\lam _ => left)) j @ i
+    \func squeeze (i j : I) => coe (\lam i => Path (\lam j => left = squeeze1 i j) (path (\lam _ => left)) (path (\lam j => squeeze1 i j))) (path (\lam _ => path (\lam _ => left))) right @ i @ j
+    \func squeeze1 (i j : I) => coe (\lam x => left = x) (path (\lam _ => left)) j @ i
     \func psqueeze  {A : \Type} {a a' : A} (p : a = a') (i : I) : a = p @ i => path (\lam j => p @ squeeze i j)
   }
 
