@@ -49,6 +49,14 @@
     {a a' : A} (p : a = a') : B a a' p => {?}
 
 -- Выразите J через Jalt. Можно пользоваться только Jalt, idp и всем, что через них выражается.
+-- Hint:
+-- 1. Выразите transport через Jalt.
+-- 2. Докажите, что тип \Sigma (x : A) (a = x) одноэлементный, то есть, что для любого p : \Sigma (x : A) (a = x) верно, что (x,idp) = p.
+-- 3. Используя эти две конструкции, легко определить J.
+
+\func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => {?}
+
+\func sigma-contr {A : \Type} {a : A} (p : \Sigma (x : A) (a = x)) : (x,idp) = {\Sigma (x : A) (a = x)} = p => {?}
 
 \func J' {A : \Type} {a : A} (B : \Pi (a' : A) -> a = a' -> \Type)
     (b : B a idp)
