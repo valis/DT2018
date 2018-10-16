@@ -82,7 +82,7 @@
     | suc n => s n (Nat-elim B z s n)
 
 -- Независимая версия:
-\func transport
+\func transport'
     {A : \Type}
     (B : A -> \Type)
     {a a' : A} (p : a = a')
