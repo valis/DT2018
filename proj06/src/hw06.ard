@@ -1,0 +1,33 @@
+\import lect06
+
+-- 1. Определите функцию swap при помощи \cowith, swap' при помощи паттерн матчинг и swap'' при помощи \new.
+
+\func swap {A B : \Type} (p : Pair A B) : Pair B A => {?}
+
+\func swap' {A B : \Type} (p : Pair A B) : Pair B A => {?}
+
+\func swap'' {A B : \Type} (p : Pair A B) : Pair B A => {?}
+
+-- 2. Докажите, что swap (swap p) = p.
+
+\func swap-involutive {A B : \Type} (p : Pair A B) : swap (swap p) = p => {?}
+
+-- 3. Докажите, что тип PosNat 0 пустой, а тип PosNat 1 нет.
+
+\data Empty
+
+\func zero-isNotPos (p : PosNat 0) : Empty => {?}
+
+\func one-isPos : PosNat 1 => {?}
+
+-- 4. Определите \record, состоящий из пар взаимно простых натуральных чисел.
+--    Определите тип, состоящий из натуральных чисел, взаимно простых с 60.
+
+-- 5. Определите класс монад, который наследует класс функторов. Определите \instance этого класса для Maybe.
+
+\data Maybe (A : \Type) | nothing | just A
+
+-- 6. Для списков есть два разных инстанса класса Monad.
+--    Определите синоним для этого класса и определите эти два инстанса.
+
+\data List (A : \Type) | nil | cons A (List A)

@@ -1,0 +1,227 @@
+-- 1. \data Pair, проекции.
+
+\data NatPair | natPair Nat Nat
+
+\func natFst (p : NatPair) : Nat
+  | natPair x _ => x
+
+\func natSnd (p : NatPair) : Nat
+  | natPair _ y => y
+
+-- 2. Эта эквивалентность для \Pi-типов, \Sigma-типов, \record.
+
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+
+\func etaSigma {A : \Type} (B : A -> \Type) (p : \Sigma (x : A) (B x))
+  : p = (p.1,p.2) \elim p
+  | (a,b) => idp
+
+\func etaSigma' {A : \Type} (B : A -> \Type) (p : \Sigma (x : A) (B x))
+  : p = (p.1,p.2) => idp
+
+-- \func etaNatPair (p : NatPair) : p = natPair (natFst p) (natSnd p)
+--   | natPair x y => idp
+
+-- 3. \record Pair, \new, \cowith, проекции, паттерн матчинг.
+
+\record NatPair'
+  | fst : Nat
+  | snd : Nat
+
+\func foo (p : NatPair') => fst {p}
+
+\func bar (p : NatPair') => p.snd
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' => path (\lam i => f (p @ i))
+
+\func foo' (p : NatPair') => NatPair'.fst {p}
+
+-- \func baz {p p' : NatPair'} (q : p = p') => pmap (\lam p => p.fst) q
+
+\func zeroPair => \new NatPair' {
+  | fst => 0
+  | snd => 0
+  }
+
+\func etaNatPair' (p : NatPair') : p = \new NatPair' { | fst => p.fst | snd => p.snd }
+  => idp
+
+\func foobar (p : NatPair') => fst {p} Nat.+ p.snd
+
+\func foobar' (p : NatPair') : Nat
+  | (a,b) => a Nat.+ b
+
+\func zeroPair' : NatPair' \cowith
+  | fst => 0
+  | snd => 0
+
+-- 4. Частичная реализация.
+
+\func partial (p : NatPair' { | fst => 1 | snd => 0 }) : NatPair' { | snd => 0 } => p
+
+-- \func new => \new NatPair'
+
+-- 5. Параметры, видимость полей.
+
+\record Pair (A B : \Type)
+  | fst_ : A
+  | snd_ : B
+
+-- \Sigma (A B : \Type) A B
+
+\func pairExample :
+  -- Pair { | A => Nat | B => Nat -> Nat }
+  Pair Nat (Nat -> Nat)
+  => \new Pair { | fst_ => 1 | snd_ (x : Nat) => x }
+
+\record NatPair'' (fst'' snd'' : Nat)
+
+\func natPair''ex => \new NatPair'' {
+  | fst'' => 0
+  | snd'' => 0
+  }
+
+-- \open NatPair''
+
+\func natPair''foo => NatPair''.fst''
+
+\func natPairEx => \new NatPair' 0 0
+
+-- 6. Dependent records, тип положительных натуральных чисел.
+
+\data Bool | true | false
+
+\data T (b : Bool) \with
+  | true => tt
+
+\func isPos (n : Nat) : Bool
+  | 0 => false
+  | suc _ => true
+
+-- { n : Nat | T (isPos n) }
+-- \Sigma (n : Nat) (T (isPos n))
+\record PosNat (n : Nat) (p : T (isPos n))
+
+-- 7. Monoid.
+
+\class Monoid (A : \Type)
+  | id : A
+  | \infixl 6 * : A -> A -> A
+  | *-assoc (x y z : A) : (x * y) * z = x * (y * z)
+  -- | *-assoc : \Pi (x y z : A) -> (x * y) * z = x * (y * z)
+  | id-left (x : A) : id * x = x
+  | id-right (x : A) : x * id = x
+
+\func baz (m : Monoid Nat 0 (Nat.+)) => m.*-assoc
+
+-- 8. Coercing field.
+
+-- \func foobarbaz (M : Monoid) (x : M) => idp {M} {x}
+
+\data XXX | con
+
+\data YYY | con' XXX Nat | con''
+  \where {
+    \coerce fromXXX (x : XXX) => con' x 0
+    \coerce toXXX (y : YYY) => con
+  }
+
+\func fff (y : YYY) => y
+
+\func ggg => fff con
+
+\func hhh : Int => 0
+
+-- 9. \extends, diamond problem.
+
+\record Base (A : \Type)
+
+\record Base' (A : \Type)
+
+\record X \extends Base
+  | a : A
+
+\record Y \extends Base'
+  | b : A
+
+\record Z \extends X, Y
+
+\func zzz => \new Z {
+  | A => {?}
+  | a => {?}
+  | Base'.A => {?}
+  | b => {?}
+  }
+
+\record AbGroup \extends Monoid
+
+\record Ring \extends AbGroup
+  | mulMonoid : Monoid A
+
+\record AbGroup' (A : \Type)
+
+\record Ring' \extends AbGroup', Monoid
+  | Monoid.A => AbGroup'.A
+
+-- 10. Functor.
+
+\class Functor (F : \Type -> \Type)
+  | fmap {A B : \Type} (f : A -> B) : F A -> F B
+  | fmap-id {A : \Type} (y : F A) : fmap (\lam (x : A) => x) y = y
+  | fmap-comp {A B C : \Type} (f : A -> B) (g : B -> C) (y : F A)
+    : fmap (\lam x => g (f x)) y = fmap g (fmap f y)
+
+-- 11. Классы, инстансы.
+
+\instance NatMonoid : Monoid Nat
+  | id => 1
+  | * => Nat.*
+  | *-assoc => {?}
+  | id-left => {?}
+  | id-right => {?}
+
+-- * {M : Monoid} (x y : M.A) : M.A
+\func f (x y : Nat) => x * y
+
+\class Eq (A : \Type)
+  | \infix 3 == (x y : A) : Bool
+
+-- refl :: Eq a => a -> Bool
+-- refl x = x == x
+\func refl {A : \Type} {e : Eq A} (a : A) => a == a
+
+\func refl' {E : Eq} (a : E) => a == a
+
+-- 12. Синонимы классов.
+
+\class AddMonoid => Monoid {
+  | id => zero
+  | * => \infixl 6 +
+  | *-assoc => +-assoc
+  | id-left => zero-left
+  | id-right => zero-right
+}
+
+\instance NatAddMonoid : AddMonoid Nat
+  | zero => 0
+  | + => Nat.+
+  | +-assoc => {?}
+  | zero-left => {?}
+  | zero-right => {?}
+
+\func addEx {A : AddMonoid} (x y : A) => x + y
+
+\func addEx' => addEx {\new Monoid {
+  | A => Nat
+  | id => {?}
+  | * => {?}
+  | *-assoc => {?}
+  | id-left => {?}
+  | id-right => {?}
+  }} 0 1
+
+\func example => 0 + 1 * 2
+
+\func mulEx {A : Monoid} (x y : A) => x * y
+
+\func mulEx' : mulEx 0 1 = 1 => idp
