@@ -48,4 +48,9 @@
 
 \func bdb {A : \Type} (p : A -> Bool) : FromDecToBool (FromBoolToDec p) = p => {?}
 
-\func dbd {A : \Type} (P : \Sigma (P : A -> \Type) (DecPred P)) : FromBoolToDec (FromDecToBool P) = P => {?}
+-- Мы не можем доказать, что FromBoolToDec (FromDecToBool P) = P, но мы можем доказать более слабое утверждение: эти предикаты логически эквивалентны.
+-- Для этого введем эквивалентность предикатов.
+
+\func \infix 4 <-> {A : \Type} (P Q : A -> \Type) => \Pi (x : A) -> \Sigma (P x -> Q x) (Q x -> P x)
+
+\func dbd {A : \Type} (P : \Sigma (P : A -> \Type) (DecPred P)) : (FromBoolToDec (FromDecToBool P)).1 <-> P.1 => {?}
