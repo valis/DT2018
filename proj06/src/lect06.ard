@@ -169,6 +169,10 @@
   | id-left (x : A) : id * x = x
   | id-right (x : A) : x * id = x
 
+\class CommMonoid \extends Monoid
+  | *-comm (x y : A) : x * y = y * x
+  | id-right x => {?`}
+
 -- Мы можем использовать поля классов как и раньше:
 \func baz (m : Monoid Nat 0 (Nat.+)) => m.*-assoc
 
@@ -291,7 +295,7 @@
 
 -- Если мы попытаеся определить тип колец следующим образом, то у нас ничего не получится, так как структуры сложения и умножения будут совпадать.
 \record Ring' \extends AbGroup, Monoid
-  | Monoid.A => AbGroup'.A
+  | Monoid.A => AbGroup.A
 
 -- 11. Functor.
 
