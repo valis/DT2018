@@ -4,7 +4,7 @@
 
 \func swap {A B : \Type} (p : Pair A B) : Pair B A => {?}
 
-\func swap' {A B : \Type} (p : Pair A B) : Pair B A => {?}
+\func swap' (p : Pair) : Pair p.B p.A => {?}
 
 \func swap'' {A B : \Type} (p : Pair A B) : Pair B A => {?}
 
@@ -27,4 +27,11 @@
 
 \data Maybe (A : \Type) | nothing | just A
 
--- 6. Задание отменено.
+-- Это задание можно проигнорировать. Я его добавил на следующий год.
+-- 6. Определите инстансы монады для State и State'.
+
+\record State (S A : \Type)
+  | state : S -> \Sigma S A
+
+\data State' (S A : \Type)
+  | state' (S -> \Sigma S A)

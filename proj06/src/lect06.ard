@@ -121,11 +121,13 @@
   }
 
 -- И наоборот, тип Pair эквивалентен следующему типу:
+{-
 \record Pair'
   | A : \Type
   | B : \Type
   | fst_ : A
   | snd_ : B
+-}
 
 -- Единственное отличие параметров и полей -- это то, что параметры по умолчанию не видны снаружи от класса, а поля видны.
 -- Мы всё еще можем сделать параметры видимыми при помощи инструкции \open:
@@ -169,9 +171,17 @@
   | id-left (x : A) : id * x = x
   | id-right (x : A) : x * id = x
 
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a)
+  => coe (\lam i => B (p @ i)) b right
+
+-- Транзитивность в инфиксной форме.
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+  => transport (\lam x => a = x) q p
+
+-- При наследовании классов можно реализовывать некоторые поля, чтобы не приходилось их реализовывать в каждом инстансе.
 \class CommMonoid \extends Monoid
   | *-comm (x y : A) : x * y = y * x
-  | id-right x => {?`}
+  | id-right x => *-comm x id *> id-left x
 
 -- Мы можем использовать поля классов как и раньше:
 \func baz (m : Monoid Nat 0 (Nat.+)) => m.*-assoc
@@ -272,19 +282,18 @@
 -- Но в рекорде Z' будет только три поля, так как поле A из рекорда Base является одним и тем же и в рекорде X', и в рекода Y':
 
 \record X' \extends Base
-  | a : A
+  | aa : A
 
 \record Y' \extends Base
-  | b : A
+  | bb : A
 
 \record Z' \extends X', Y'
 
 -- Например, тип колец можно реализовать следующим образом.
-\record AbGroup \extends Monoid {
+\record AbGroup \extends CommMonoid {
   | inverse : A -> A
   | inv-left (x : A) : inverse x * x = id
   | inv-right (x : A) : x * inverse x = id
-  | *-comm (x y : A) : x * y = y * x
 }
 
 -- Чтобы отличать структуру сложения от структуры умножения, мы не наследуемся от моноида, но добавляем его как поля.
@@ -293,9 +302,14 @@
 \record Ring \extends AbGroup
   | mulMonoid : Monoid A
 
+-- Определим еще один тип абелевых групп, который не наследует моноиды.
+\record AbGroup' (A : \Type) {
+  -- Здесь нужно перечислить все поля из Monoid, CommMonoid и AbGroup.
+}
+
 -- Если мы попытаеся определить тип колец следующим образом, то у нас ничего не получится, так как структуры сложения и умножения будут совпадать.
-\record Ring' \extends AbGroup, Monoid
-  | Monoid.A => AbGroup.A
+\record Ring' \extends AbGroup', Monoid
+  | Monoid.A => AbGroup'.A
 
 -- 11. Functor.
 
