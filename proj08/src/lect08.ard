@@ -1,0 +1,65 @@
+\open Nat
+
+-- 1. Вселенные, полиморфизм по уровням.
+
+\func tt : \Type2 => \Type0 -> \Type1
+
+\func type : \Type => \Type
+
+\func type' : \Type (\suc \lp) => \Type \lp
+
+\func id (A : \Type) (a : A) => a
+
+\func test1 => id Nat 0
+\func test2 => id \Type0 Nat
+\func test3 => id (\Type0 -> \Type1) (\lam X => X)
+\func test4 => id _ id
+\func test4' => id (\Pi (A : \Type) -> A -> A) id
+
+\class Magma (A : \Type)
+  | \infixl 6 ** : A -> A -> A
+
+\func test5 : \Type0 => Magma Nat
+-- \func test : \Type \lp => Magma
+
+\data Magma' (A : \Type)
+  | con (A -> A -> A)
+
+\class Functor (F : \Type -> \Type)
+  | fmap {A B : \Type} : (A -> B) -> F A -> F B
+
+\data Maybe (A : \Type) | nothing | just A
+
+\func test6 : \Type (\max \lp 1) => Functor Maybe
+
+-- 2. Предикаты.
+
+\data Unit | unit
+
+\data Empty
+
+-- P : A -> Bool
+-- \forall (x : A) (P x) : Bool
+
+\func lessOrEq (n m : Nat) : \Type
+  | 0, _ => Unit
+  | suc _, 0 => Empty
+  | suc n, suc m => lessOrEq n m
+
+\data LessOrEq (n m : Nat) \with
+  | 0, m => z<=n
+  | suc n, suc m => s<=s (LessOrEq n m)
+
+\func test8 : LessOrEq 0 100 => z<=n
+\func test9 : LessOrEq 3 67 => s<=s (s<=s (s<=s z<=n))
+-- \func test10 : LessOrEq 1 0 => ....
+
+\data LessOrEq' (n m : Nat)
+  | z<=n' (n = 0)
+  | s<=s' {n' m' : Nat} (n = suc n') (m = suc m') (LessOrEq' n' m')
+
+\data LessOrEq'' (n m : Nat) \elim m
+  | suc m => <=-step (LessOrEq'' n m)
+  | m => <=-refl (n = m)
+
+\func LessOrEq''' (n m : Nat) => \Sigma (k : Nat) (n + k = m)

@@ -1,0 +1,13 @@
+\import lect08
+
+-- 1. Определите предикат принадлежности элемента списку.
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\data In {A : \Type} (a : A) (xs : List A)
+
+-- 2. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
+
+-- 3. Определите предикат xs <= ys на списках, означающий "список xs является подсписком ys".
+
+-- 4. Докажите, что filter xs <= xs для любого списка xs.
