@@ -62,4 +62,4 @@
   | suc m => <=-step (LessOrEq'' n m)
   | m => <=-refl (n = m)
 
-\func LessOrEq''' (n m : Nat) => \Sigma (k : Nat) (n + k = m)
+\func LessOrEq''' (n m : Nat) => \Sigma (k : Nat) (k + n = m)

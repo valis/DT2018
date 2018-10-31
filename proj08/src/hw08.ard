@@ -1,13 +1,35 @@
 \import lect08
 
--- 1. Определите предикат принадлежности элемента списку.
+-- 1. Укажите явно чему равен уровень в каждом из вызовов id' ниже.
+--    Напишите явно чему равны типы всех функций idTest*.
+
+\func id' {A : \Type} (a : A) => a
+
+\func idTest1 => id' (id' id)
+\func idTest2 => id' Maybe
+\func idTest3 => id' Functor
+\func idTest4 => id' (Functor Maybe)
+\func idTest5 (f : \Pi {A B : \Type} -> (A -> B) -> Maybe A -> Maybe B) => id' (Functor Maybe f)
+
+-- 2. Определите предикат принадлежности элемента списку.
 
 \data List (A : \Type) | nil | cons A (List A)
 
 \data In {A : \Type} (a : A) (xs : List A)
 
--- 2. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
+-- 3. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
 
--- 3. Определите предикат xs <= ys на списках, означающий "список xs является подсписком ys".
+-- 4. Определите рефлексивное транзитивное замыкание отношения.
+--    То есть ReflTransClosure R -- это минимальное рефлексивное и транзитивное отношение, содержащее R.
 
--- 4. Докажите, что filter xs <= xs для любого списка xs.
+\data ReflTransClosure {A : \Type} (R : A -> A -> \Type) (x y : A)
+
+-- 5. Докажите, что если R уже рекфлексивно и транзитивно, то ReflTransClosure R эквивалентно R.
+
+\func \infix 4 <-> {A : \Type} (P Q : A -> A -> \Type) => \Pi (x y : A) -> \Sigma (P x y -> Q x y) (Q x y -> P x y)
+
+\func ReflTransClosure-lem {A : \Type} (R : A -> A -> \Type) (refl : \Pi (x : A) -> R x x) (trans : \Pi (x y z : A) -> R x y -> R y z -> R x z) : R <-> ReflTransClosure R => {?}
+
+-- 6. Определите предикат xs <= ys на списках, означающий "список xs является подсписком ys".
+
+-- 7. Докажите, что filter xs <= xs для любого списка xs.
