@@ -90,7 +90,7 @@
   | suc x, 0 => absurd p
   | suc x, suc y => <=-helper p
 
--- Докажем, что длина отсортированного списка не превышает длины исходного.
+-- Докажем, что длина отфильтрованного списка не превышает длины исходного.
 \func filter-lem {A : \Type} (p : A -> Bool) (xs : List A) : length (filter p xs) <= length xs \elim xs
   | nil => unit
   | cons x xs => \case p x \as b \return length (\case b \with { | true => cons x (filter p xs) | false => filter p xs }) <= suc (length xs) \with {
