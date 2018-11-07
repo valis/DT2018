@@ -199,24 +199,20 @@
   | nat
   | list Type
   | arr Type Type
-  | type0
 
 -- Мы должны еще определить функцию, которая переводит элементы Type в настоящие типы.
-\func El (t : Type) : \Type1 \elim t
+\func El (t : Type) : \Type0 \elim t
   | nat => Nat
   | list t => List (El t)
   | arr t1 t2 => El t1 -> El t2
-  | type0 => \Type0
 
 -- Если мы хотим определить вселенную, в которой у нас есть заисимые типы, то такое определение должно быть индуктивно-рекурсивным.
-\data Type' : \Type1
-  | nat
-  | list Type'
-  | pi (a : Type') (El' a -> Type')
-  | type0
+\data Type' : \Type0
+  | nat'
+  | list' Type'
+  | pi' (a : Type') (El' a -> Type')
 
-\func El' (t : Type') : \Type1 \elim t
-  | nat => Nat
-  | list t => List (El' t)
-  | pi t1 t2 => \Pi (a : El' t1) -> El' (t2 a)
-  | type0 => \Type0
+\func El' (t : Type') : \Type0 \elim t
+  | nat' => Nat
+  | list' t => List (El' t)
+  | pi' t1 t2 => \Pi (a : El' t1) -> El' (t2 a)
