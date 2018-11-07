@@ -1,0 +1,145 @@
+\open Nat
+
+-- 1. Предикат ``домен функции''
+
+\data Bool | true | false
+
+\func not (b : Bool) : Bool
+  | true => false
+  | false => true
+
+\func if {A : \Type} (b : Bool) (t e : A) : A \elim b
+  | true => t
+  | false => e
+
+\func \infix 4 < (n m : Nat) : Bool
+  | _, 0 => false
+  | 0, suc _ => true
+  | suc n, suc m => n < m
+
+\func \infixl 6 - (n m : Nat) : Nat
+  | 0, _ => 0
+  | suc n, 0 => suc n
+  | suc n, suc m => n - m
+
+\data T (b : Bool) \with
+  | true => tt
+
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) => coe (\lam i => B (p @ i)) b right
+
+
+
+-- \func div (x y : Nat) => if (x < y) 0 (suc (div (x - y) y))
+
+\data divDom (n k : Nat)
+  | lt (T (n < k))
+  | geq (T (not (n < k))) (divDom (n - k) k)
+
+\func div {x y : Nat} (d : divDom x y) : Nat \elim d
+  | lt _ => 0
+  | geq _ d => suc (div d)
+
+
+\data ModView (m n : Nat)
+  | quot-rem (q r : Nat) (t : T (r < m)) (p : r + m * q = n)
+
+\func mod-view (m n : Nat) (t : T (0 < m)) : ModView m n => {?}
+
+\func <lem (r k m : Nat) : T (not (r + (m + k) < k))
+  | 0, 0, 0 => tt
+  | suc _, 0, 0 => tt
+  | _, 0, suc _ => tt
+  | r, suc k, m => <lem r k m
+
+\func -lem (r k m : Nat) : r + m = r + (m + k) - k \elim r, k, m
+  | 0, 0, 0 => idp
+  | suc _, 0, 0 => idp
+  | r, 0, suc _ => idp
+  | r, suc k, m => -lem r k m
+
+\func <0lem (n k : Nat) (p : T (n < k)) : T (0 < k) \elim n, k
+  | 0, 0 => p
+  | suc n, 0 => p
+  | _, suc _ => tt
+
+\func fromDivDom {n k : Nat} (d : divDom n k) : T (0 < k)
+  | lt t => <0lem _ _ t
+  | geq t d => fromDivDom d
+
+\func toDivDom {n k : Nat} (t : T (0 < k)) : divDom n k => \case mod-view k n t \with {
+  | quot-rem q r s p => helper n k q r s p
+} \where {
+  \func helper (n k q r : Nat) (s : T (r < k)) (p : r + k * q = n) : divDom n k \elim q
+    | 0 => lt (transport (\lam x => T (x < k)) p s)
+    | suc q => geq (transport (\lam x => T (not (x < k))) p (<lem _ _ _))
+                   (helper (n - k) k q r s (transport (\lam x => r + k * q = x - k) p (-lem _ _ _)))
+}
+
+-- 2. Принципы индукции.
+
+\func Nat-rec {A : \Type} (z : A) (s : Nat -> A -> A) (n : Nat) : A \elim n
+  | zero => z
+  | suc n => s n (Nat-rec z s n)
+
+\func Nat-elim {A : Nat -> \Type} (z : A zero) (s : \Pi (n : Nat) -> A n -> A (suc n)) (n : Nat) : A n \elim n
+  | zero => z
+  | suc n => s n (Nat-elim z s n)
+
+\func Bool-elim {A : Bool -> \Type} (t : A true) (e : A false) (b : Bool) : A b \elim b
+  | true => t
+  | false => e
+
+{-
+\func f (n : Nat) : A
+  | zero => z
+  | suc n => s
+
+\func f' => Nat-rec A z (\lam n r => s[r / f n])
+-}
+
+\data D
+  | con1 Nat
+  | con2 D D
+  | con3 (Nat -> D)
+
+\func D-rec {A : \Type} (c1 : Nat -> A) (c2 : D -> A -> D -> A -> A) (c3 : (Nat -> D) -> (Nat -> A) -> A) (d : D) : A \elim d
+  | con1 n => c1 n
+  | con2 d1 d2 => c2 d1 (D-rec c1 c2 c3 d1) d2 (D-rec c1 c2 c3 d2)
+  | con3 f => c3 f (\lam n => D-rec c1 c2 c3 (f n))
+
+\func Nat-ind {A : Nat -> \Type}
+  (r : \Pi (n : Nat) -> (\Pi (k : Nat) -> T (k < n) -> A k) -> A n)
+  (n : Nat) : A n => {?}
+
+-- 3. Индукция-рекурсия, вселенные.
+
+\func isEven (n : Nat) : Bool
+  | 0 => true
+  | suc n => isOdd n
+
+\func isOdd (n : Nat) : Bool
+  | 0 => false
+  | suc n => isEven n
+
+\data IsEven (n : Nat) : \Type \with
+  | 0 => zero-isEven
+  | suc n => suc-isEven (IsOdd n)
+
+\data IsOdd (n : Nat) : \Type \with
+  | suc n => suc-isOdd (IsEven n)
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\data Type : \Type1
+  | nat
+  | list Type
+  | pi (a : Type) (El a -> Type)
+  | type0
+
+\func El (t : Type) : \Type1 \elim t
+  | nat => Nat
+  | list t => List (El t)
+  | pi t1 t2 => \Pi (a : El t1) -> El (t2 a)
+  | type0 => \Type0
