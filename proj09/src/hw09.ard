@@ -4,7 +4,9 @@
 
 -- 2. Докажите ассоциативность сложения для натуральных чисел через Nat-ind.
 
--- 3. Определите toDivDom через Nat-<-ind
+-- 3. Определите через Nat-<-ind либо div, либо toDivDom.
+
+\func div (n k : Nat) : Nat => {?}
 
 \func toDivDom {n k : Nat} (t : T (0 < k)) : divDom n k => {?}
 
