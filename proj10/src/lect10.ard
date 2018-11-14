@@ -1,18 +1,17 @@
 -- 1. sprintf
 
--- "foo%dbar%sbaz" --> cons (const "foo") (cons int (cons (const "bar") (cons string (cons (const "baz") nil))))
+-- Так как у нас нет типа строк, мы будем использовать вместо них списки лексем, где лексема -- это элемент произвольного типа.
+-- Вместо форматной строки мы будем принмать список инструкций.
+-- Если бы у нас был тип строк, мы могли бы просто реализовать функцию, преобразующую строку в список таких инструкций.
+-- Например, строка "foo%dbar%sbaz" преобразуется в cons (const "foo") (cons int (cons (const "bar") (cons string (cons (const "baz") nil)))).
 
 \data Inst (lex : \Type)
   | int
   | string
   | const (List lex)
 
-\func Fmt {lex : \Type} (insts : List (Inst lex)) : \Type \elim insts
-  | nil => List lex
-  | cons int insts => Int -> Fmt insts
-  | cons string insts => List lex -> Fmt insts
-  | cons (const str) insts => Fmt insts
-
+-- Число аргументов sprintf зависит от форматной строки (то есть от списка инструкций).
+-- Поэтому мы определяем зависимый тип Fmt, параметризованный списком инструкций.
 \func sprintf {lex : \Type} (showInt : Int -> List lex) (insts : List (Inst lex)) : Fmt insts
   => sprintfAcc showInt nil insts
   \where {
@@ -23,37 +22,46 @@
       | cons (const s) insts => sprintfAcc showInt (acc ++ s) insts
   }
 
+\func Fmt {lex : \Type} (insts : List (Inst lex)) : \Type \elim insts
+  | nil => List lex
+  | cons int insts => Int -> Fmt insts
+  | cons string insts => List lex -> Fmt insts
+  | cons (const str) insts => Fmt insts
+
 \func example {lex : \Type} : List lex => sprintf (\lam _ => nil) nil
 
 -- 2. Тип сортированных списков.
 
-\data Empty
-
-\class StrictPoset (A : \Type)
-  | \infix 4 < : A -> A -> \Type
-  | antiRefl (x : A) : x < x -> Empty
-  | strictTrans (x y z : A) : x < y -> y < z -> x < z
-
+-- Для определения типа сортированных списков нам понадобится тип частично упорядоченных множеств.
 \class Poset (A : \Type)
   | \infix 4 <= : A -> A -> \Type
   | refl (x : A) : x <= x
   | trans (x y z : A) : x <= y -> y <= z -> x <= z
   | antiSym (x y : A) : x <= y -> y <= x -> x = y
 
+\data Empty
+
+-- Мы еще можем использовать тип строгих порядков, но Poset немного удобнее.
+\class StrictPoset (A : \Type)
+  | \infix 4 < : A -> A -> \Type
+  | antiRefl (x : A) : x < x -> Empty
+  | strictTrans (x y z : A) : x < y -> y < z -> x < z
+
+-- Мы определим тип сортированных списков индуктивно-индуктивно (можно вместо этого использовать индуктивно-рекурсивное определение).
 \data SortedList (A : Poset) : \Type
   | snil
   | scons (x : A) (xs : SortedList A) (h : HeadL x xs)
 
+-- HeadL x xs верно тогда и только тогда, когда xs пуст либо x <= головы xs.
 \data HeadL {A : Poset} (x : A) (xs : SortedList A) : \Type \elim xs
   | snil => nilL
   | scons x' _ _ => consL (x <= {A} x')
 
 \data Either (A B : \Type) | inl A | inr B
 
+-- Для определения функции сортировки нужно знать, что наш порядок является тотальным.
 \class TotalPoset \extends Poset
   | totality (x y : A) : Either (x <= y) (y <= x)
-
--- 3. Корректность сортировки.
 
 \data List (A : \Type) | nil | cons A (List A)
 
@@ -61,9 +69,30 @@
   | nil => ys
   | cons x xs => cons x (xs ++ ys)
 
--- P : (Nat -> Nat) -> \Type
--- P f = (f 3 = 6)
--- P f -> P g -> f = g
+-- 3. Полнота спецификации.
 
--- P : (List A -> List A) -> \Type
--- P f => \Pi (xs : List A) -> \Sigma (isSorted (f xs)) (isPerm (f xs) xs)
+-- Спецификация для некоторого значения a типа A -- это просто предикат вида P : A -> \Type.
+-- То есть спецификация -- это просто свойство элемента, которое мы хотим про него доказать.
+
+-- Спецификация корректна, если верно P a.
+-- Спецификация полна, если P x влечет x = a для любого x : A.
+
+-- Например, пусть у нас есть функция, вычисляющая факториал fac : Nat -> Nat.
+-- P1 -- корретная спецификация для fac, но не полная.
+-- \func P1 (f : Nat -> Nat) => f 3 = 6
+-- P2 -- полная, но не корректная
+-- \func P2 (f : Nat -> Nat) => Empty
+-- P3 -- полная и корректная спецификация для fac.
+-- \func P3 (f : Nat -> Nat) => \Sigma (f 0 = 1) (\Pi (n : Nat) -> f (suc n) = suc n * f n)
+
+-- Полная и корректная спецификация для функции сортировки:
+-- \func P (f : List A -> List A) => \Pi (xs : List A) -> \Sigma (isSorted (f xs)) (isPerm (f xs) xs)
+-- где isSorted xs верно тогда и только тогда, когда список xs отсортирован, а isPerm xs ys верно тогда и только список xs является перестановкой списка ys.
+
+-- Разумеется, мы хотим, чтобы спецификация была, по крайней мере, корректной.
+-- Мы можем не требовать полноты, если полную спецификацию слишком сложно проверить, и нам достаточно истинности частичной спецификации.
+-- Тем не менее полезно понимать когда спецификация является полной.
+
+-- Есть простое необходимое (и достаточное для корректных спецификаций) условие полноты, которое не зависит от элемента, для которого задается спецификация:
+-- \Pi (x y : A) -> P x -> P y -> x = y
+-- То есть должно существовать не более одного элемента, на котором предикат верен.
