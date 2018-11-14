@@ -1,0 +1,69 @@
+-- 1. sprintf
+
+-- "foo%dbar%sbaz" --> cons (const "foo") (cons int (cons (const "bar") (cons string (cons (const "baz") nil))))
+
+\data Inst (lex : \Type)
+  | int
+  | string
+  | const (List lex)
+
+\func Fmt {lex : \Type} (insts : List (Inst lex)) : \Type \elim insts
+  | nil => List lex
+  | cons int insts => Int -> Fmt insts
+  | cons string insts => List lex -> Fmt insts
+  | cons (const str) insts => Fmt insts
+
+\func sprintf {lex : \Type} (showInt : Int -> List lex) (insts : List (Inst lex)) : Fmt insts
+  => sprintfAcc showInt nil insts
+  \where {
+    \func sprintfAcc {lex : \Type} (showInt : Int -> List lex) (acc : List lex) (insts : List (Inst lex)) : Fmt insts \elim insts
+      | nil => acc
+      | cons int insts => \lam i => sprintfAcc showInt (acc ++ showInt i) insts
+      | cons string insts => \lam s => sprintfAcc showInt (acc ++ s) insts
+      | cons (const s) insts => sprintfAcc showInt (acc ++ s) insts
+  }
+
+\func example {lex : \Type} : List lex => sprintf (\lam _ => nil) nil
+
+-- 2. Тип сортированных списков.
+
+\data Empty
+
+\class StrictPoset (A : \Type)
+  | \infix 4 < : A -> A -> \Type
+  | antiRefl (x : A) : x < x -> Empty
+  | strictTrans (x y z : A) : x < y -> y < z -> x < z
+
+\class Poset (A : \Type)
+  | \infix 4 <= : A -> A -> \Type
+  | refl (x : A) : x <= x
+  | trans (x y z : A) : x <= y -> y <= z -> x <= z
+  | antiSym (x y : A) : x <= y -> y <= x -> x = y
+
+\data SortedList (A : Poset) : \Type
+  | snil
+  | scons (x : A) (xs : SortedList A) (h : HeadL x xs)
+
+\data HeadL {A : Poset} (x : A) (xs : SortedList A) : \Type \elim xs
+  | snil => nilL
+  | scons x' _ _ => consL (x <= {A} x')
+
+\data Either (A B : \Type) | inl A | inr B
+
+\class TotalPoset \extends Poset
+  | totality (x y : A) : Either (x <= y) (y <= x)
+
+-- 3. Корректность сортировки.
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\func \infixl 6 ++ {A : \Type} (xs ys : List A) : List A \elim xs
+  | nil => ys
+  | cons x xs => cons x (xs ++ ys)
+
+-- P : (Nat -> Nat) -> \Type
+-- P f = (f 3 = 6)
+-- P f -> P g -> f = g
+
+-- P : (List A -> List A) -> \Type
+-- P f => \Pi (xs : List A) -> \Sigma (isSorted (f xs)) (isPerm (f xs) xs)
