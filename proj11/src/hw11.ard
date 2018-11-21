@@ -35,7 +35,7 @@
 
 -- 4. Докажите, что Either не является утверждением в общем случаем.
 
-\func Either-isProp {A B : \Type} (pA : isProp A) (pB : isProp B) (p : isProp (Either A B)) : Empty => {?}
+\func Either-isProp (p : \Pi {A B : \Type} (pA : isProp A) (pB : isProp B) -> isProp (Either A B)) : Empty => {?}
 
 -- 5. Докажите, что LessOrEq и LessOrEq' являются предикатами.
 
