@@ -49,6 +49,11 @@
 
 \func LessOrEq-isProp {n m : Nat} : isProp (LessOrEq n m) => {?}
 
+-- Для решения LessOrEq'-isProp понадобится тот факт, что Nat является множеством.
+-- Ниже приведено доказательство этого факта, которое можно использовать.
+-- Пояснение к этому доказательству будет дано позже.
+\func Nat-isSet : isSet Nat => \lam _ _ => Path.inProp
+
 \func LessOrEq'-isProp {n m : Nat} : isProp (LessOrEq' n m) => {?}
 
 -- 6. Докажте, что ReflClosure LessOrEq не является предикатом, а ReflClosure (\lam x y => T (x < y)) является.
