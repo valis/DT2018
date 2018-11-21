@@ -1,0 +1,71 @@
+\import lect11
+
+-- 1. Пусть f : A -> B и g : B -> C ─ некоторые функции.
+--    Докажите, что если f и g инъективны, то g `o` f также инъективна.
+--    Докажите, что если g `o` f инъективна, то f также инъективна.
+
+-- Композиция функций
+\func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
+
+\func o-inj {A B C : \Type} (f : A -> B) (g : B -> C) (p : isInj f) (q : isInj g) : isInj (g `o` f) => {?}
+
+\func o-inj' {A B C : \Type} (f : A -> B) (g : B -> C) (p : isInj (g `o` f)) : isInj f => {?}
+
+-- 2. Определите предикат "делится на 3 или на 5" так, чтобы он возвращал утверждения.
+--    Докажите, что MultipleOf3Or5 вкладывается в ℕ.
+
+\func isMultipleOf3Or5 (n : Nat) : \Type => {?}
+
+\func isMultipleOf3Or5-isProp (n : Nat) : isProp (isMultipleOf3Or5 n) => {?}
+
+\func MultipleOf3Or5 => \Sigma (n : Nat) (isMultipleOf3Or5 n)
+
+\func Mul-inc (m : MultipleOf3Or5) => m.1
+
+\func Mul-inc-isInj : isInj Mul-inc => {?}
+
+-- 3. Мы будем говорить, что тип A тривиален, если существует элемент в A, такой что любой другой элемент в A равен ему.
+--    Докажите, что тип A тривиален тогда и только тогда, когда A является утверждением и A населен.
+
+\func isTriv (A : \Type) => \Sigma (a : A) (\Pi (a' : A) -> a = a')
+
+\func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
+
+\func isTriv-lem (A : \Type) : isTriv A <-> (\Sigma (isProp A) A) => {?}
+
+-- 4. Докажите, что Either не является утверждением в общем случаем.
+
+\func Either-isProp {A B : \Type} (pA : isProp A) (pB : isProp B) (p : isProp (Either A B)) : Empty => {?}
+
+-- 5. Докажите, что LessOrEq и LessOrEq' являются предикатами.
+
+\data LessOrEq (n m : Nat) \with
+  | 0, m => z<=n
+  | suc n, suc m => s<=s (LessOrEq n m)
+
+\data LessOrEq' (n m : Nat) \elim m
+  | suc m => <=-step (LessOrEq' n m)
+  | m => <=-refl (n = m)
+
+\func LessOrEq-isProp {n m : Nat} : isProp (LessOrEq n m) => {?}
+
+\func LessOrEq'-isProp {n m : Nat} : isProp (LessOrEq' n m) => {?}
+
+-- 6. Докажте, что ReflClosure LessOrEq не является предикатом, а ReflClosure (\lam x y => T (x < y)) является.
+
+\func \infix 4 < (n m : Nat) : Bool
+  | _, 0 => false
+  | 0, suc _ => true
+  | suc n, suc m => n < m
+
+\data ReflClosure (R : Nat -> Nat -> \Type) (x y : Nat)
+  | refl (x = y)
+  | inc (R x y)
+
+\func ReflClosure_<-isProp (n m : Nat) : isProp (ReflClosure (\lam x y => T (x < y)) n m) => {?}
+
+\func ReflClosure_<=-isNotProp (p : \Pi (n m : Nat) -> isProp (ReflClosure LessOrEq n m)) : Empty => {?}
+
+-- 7. Докажите, что если тип A вкладывается в тип B и B является утверждением, то и A является утверждением.
+
+\func sub-isProp {A B : \Type} (f : A -> B) (p : isInj f) (q : isProp B) : isProp A => {?}

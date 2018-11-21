@@ -1,0 +1,160 @@
+-- 1. Подмножества, инъективные функции.
+
+-- { x : A | P x } <= A
+-- \lam t => t.1 :
+-- \Sigma (x : A) (P x) -> A
+
+\data Bool | true | false
+
+\func isEven (n : Nat) : Bool
+  | 0 => true
+  | 1 => false
+  | suc (suc n) => isEven n
+
+\data T (b : Bool) \with
+  | true => tt
+
+-- { n : ℕ | T (isEven n) } -- теоретико-множественная нотация
+\func Even => \Sigma (n : Nat) (T (isEven n)) -- в теории типов записывается так
+
+\func Even-inc (e : Even) => e.1
+
+\func isInj {A B : \Type} (f : A -> B) => \Pi (x y : A) -> f x = f y -> x = y
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' =>
+  path (\lam i => f (p @ i))
+
+\func pmap2 {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' =>
+  path (\lam i => f (p @ i) (q @ i))
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' =>
+  coe (\lam i => B (p @ i)) b right
+
+\func idp {A : \Type} {a : A} : a = a => path (\lam _ => a)
+
+\func J
+  {A : \Type} {a : A}
+  (B : \Pi (a' : A) -> a = a' -> \Type)
+  (b : B a idp)
+  {a' : A} (p : a = a')
+  : B a' p
+  => coe (\lam i => B (p @ i) (psqueeze p i)) b right
+  \where {
+    \func squeeze (i j : I) => coe (\lam i => Path (\lam j => left = squeeze1 i j) (path (\lam _ => left)) (path (\lam j => squeeze1 i j))) (path (\lam _ => path (\lam _ => left))) right @ i @ j
+    \func squeeze1 (i j : I) => coe (\lam x => left = x) (path (\lam _ => left)) j @ i
+    \func psqueeze  {A : \Type} {a a' : A} (p : a = a') (i : I) : a = p @ i => path (\lam j => p @ squeeze i j)
+  }
+
+\func prodEq {A B : \Type} (t1 t2 : \Sigma A B) (p : t1.1 = t2.1) (q : t1.2 = t2.2)
+  : t1 = t2
+  => pmap2 (\lam a b => (a,b)) p q
+  -- => path (\lam i => (p @ i, q @ i))
+
+\func sigmaEq {A : \Type} (B : A -> \Type) (t1 t2 : \Sigma (x : A) (B x))
+  -- t1.2 : B t1.1
+  -- t2.2 : B t2.1
+              (p : t1.1 = t2.1) (q : transport B p t1.2 = t2.2)
+  : t1 = t2
+  => J (\lam a' p' => \Pi (b' : B a') (q' : transport B p' t1.2 = b') -> t1 = (a',b'))
+       (\lam b' q' => pmap (\lam b'' => ((t1.1,b'') : \Sigma (x : A) (B x))) q')
+       p t2.2 q
+
+\func T-lem {b : Bool} {x y : T b} : x = y
+  | {true}, {tt}, {tt} => idp
+
+\func Even-inc-isInj : isInj Even-inc =>
+  \lam t1 t2 (p : t1.1 = t2.1) => sigmaEq (\lam n => T (isEven n)) t1 t2 p T-lem
+
+\func mod3 (n : Nat) : Nat
+  | 0 => 0
+  | 1 => 1
+  | 2 => 2
+  | suc (suc (suc n)) => mod3 n
+
+\func mod5 (n : Nat) : Nat
+  | 0 => 0
+  | 1 => 1
+  | 2 => 2
+  | 3 => 3
+  | 4 => 4
+  | suc (suc (suc (suc (suc n)))) => mod5 n
+
+\data \fixl 4 Either (A B : \Type) | inl A | inr B
+
+\func MultipleOf3Or5 => \Sigma (n : Nat) ((mod3 n = 0) `Either` (mod5 n = 0))
+
+\func Mul-inc (m : MultipleOf3Or5) => m.1
+
+\func Mul-inc-isInj (p : isInj Mul-inc) : Empty => {?}
+
+-- 2. Утверждения
+
+\func isProp (A : \Type) => \Pi (x y : A) -> x = y
+
+\data Empty
+
+\func T-absurd {A : \Type} (t : T false) : A
+
+\func BoolIsNotProp (p : isProp Bool) : Empty => T-absurd (transport T (p true false) tt)
+
+-- 2. Какие предикаты являются настоящими предикатами (то есть возвращают утверждения)?
+--    ⊤, ⊥, ∧, ∨, →, ∀, ∃, =, рекурсвиные предикаты, индуктивные предикаты.
+
+\func absurd {A : \Type} (t : Empty) : A
+
+\func Empty-isProp : isProp Empty => \lam e1 e2 => absurd e1
+
+\data Unit | unit
+
+\func Unit-isProp : isProp Unit => \lam u1 u2 =>
+    \case u1 \as u1', u2 \as u2' \return u1' = u2' \with { | unit, unit => idp }
+
+\func Sigma-isProp {A B : \Type} (pA : isProp A) (pB : isProp B) : isProp (\Sigma A B) =>
+  \lam t1 t2 => prodEq t1 t2 (pA _ _) (pB _ _)
+
+-- Не верно
+-- \func Either-isProp {A B : \Type} (pA : isProp A) (pB : isProp B) : isProp (Either A B) =>
+--   {?}
+
+\func funcExt {A : \Type} (B : A -> \Type) (f g : \Pi (x : A) -> B x)
+              (p : \Pi (x : A) -> f x = g x) : f = g =>
+  path (\lam i x => p x @ i)
+
+\func Impl-isProp {A B : \Type} (pA : isProp A) (pB : isProp B) : isProp (A -> B) =>
+  \lam f1 f2 => funcExt (\lam _ => B) f1 f2 (\lam x => pB (f1 x) (f2 x))
+                -- path (\lam i x => pB x @ i)
+
+\func forall-isProp {A : \Type} (B : A -> \Type) (pB : \Pi (x : A) -> isProp (B x))
+  : isProp (\Pi (x : A) -> B x)
+  => \lam f1 f2 => funcExt B f1 f2 (\lam x => pB x (f1 x) (f2 x))
+
+{- не верно
+\func exists-isProp {A : \Type} (B : A -> \Type)
+                    (pB : \Pi (x : A) -> isProp (B x))
+  : isProp (\Sigma (x : A) (B x)) =>
+  {?}
+-}
+
+-- не верно
+-- \func equality-isProp {A : \Type} (a a' : A) : isProp (a = a') => {?}
+
+\func isSet (A : \Type) => \Pi (a a' : A) -> isProp (a = a')
+
+\func equality-isProp {A : \Type} (p : isSet A) (a a' : A) : isProp (a = a') => p a a'
+
+{- является утверждением, если ... являются таковыми
+\func pred (n : Nat) : \Type
+  | 0 => ...
+  | suc n => ...
+-}
+
+-- является утверждением
+\data \infix 4 <= (n m : Nat) \with
+  | 0, _ => zero<=_
+  | suc n, suc m => suc<=suc (n <= m)
+
+-- не является утверждением
+\data \infix 4 <=' (n m : Nat) \elim m
+  | m => <=-refl (n = m)
+  | 1 => zero<=one (n = 0)
+  | suc m => <=-step (n <=' m)
