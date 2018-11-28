@@ -24,12 +24,12 @@
               (f : \Pi (x : A) -> C (inl x)) (g : \Pi (y : B) -> C (inr y))
               (p : A `Or` B) : C p => {?}
 
--- 4. Тип С называется когенератором, если для любых функция f,g : A -> B верно, что если h `o` f = h `o` g для всех h : B -> C, то f = g.
+-- 4. Тип С называется когенератором, если для любых множеств A и B и любых функция f,g : A -> B верно, что если h `o` f = h `o` g для всех h : B -> C, то f = g.
 --    Докажите, что \Prop является когенератором.
 
 \func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
 
-\func isCogenerator (C : \Type) => \Pi {A B : \Type} (f g : A -> B) (p : \Pi (h : B -> C) -> h `o` f = h `o` g) -> f = g
+\func isCogenerator (C : \Type) => \Pi {A B : \Set} (f g : A -> B) (p : \Pi (h : B -> C) -> h `o` f = h `o` g) -> f = g
 
 \func PropIsCogenerator : isCogenerator \Prop => {?}
 
