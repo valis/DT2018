@@ -1,0 +1,49 @@
+\import lect12
+
+-- 1. Докажите, что n-типы замкнуты относительно образования \Pi-типов.
+
+\func levelPi {A : \Type} (B : A -> \Type) (n : Nat) (p : \Pi (x : A) -> B x `hasLevel` n) : (\Pi (x : A) -> B x) `hasLevel` n => {?}
+
+-- 2. Определите функцию с указанным типом.
+
+\func Set2-to-Set1 (P : Set2) : \Set => {?}
+
+-- 3. Тип Dec A лежит во вселенной \Set0. Сделайте, чтобы он лежал в \Prop.
+
+\data Empty
+
+\data Dec (A : \Prop)
+  | yes A
+  | no (A -> Empty)
+
+-- \func testDec : \Prop -> \Prop => Dec
+
+-- 4. Докажите следующий закон де Моргана.
+
+\func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
+
+\func deMorgan (A B C : \Prop) : (\Sigma A (B `Or` C)) <-> ((\Sigma A B) `Or` (\Sigma A C)) => {?}
+
+-- 5. Определите элиминатор для Or.
+
+\func Or-elim {A B : \Prop} (C : Or A B -> \Prop)
+              (f : \Pi (x : A) -> C (inl x)) (g : \Pi (y : B) -> C (inr y))
+              (p : A `Or` B) : C p => {?}
+
+-- 6. Тип С называется когенератором, если для любых функция f,g : A -> B верно, что если h `o` f = h `o` g для всех h : B -> C, то f = g.
+--    Докажите, что \Prop является когенератором.
+
+\func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
+
+\func isCogenerator (C : \Type) => \Pi {A B : \Type} (f g : A -> B) (p : \Pi (h : B -> C) -> h `o` f = h `o` g) -> f = g
+
+\func PropIsCogenerator : isCogenerator \Prop => {?}
+
+-- 7. Тип X называется инъективным, если для любой функции f : A -> X и любой инъекции i : A -> B сущесвует функция l : B -> X такая, что l `o` i = f.
+--    Докажите, что \Prop инъективен.
+
+\func isInj {A B : \Type} (f : A -> B) => \Pi (x y : A) -> f x = f y -> x = y
+
+\func isInjective (X : \Type) => \Pi {A B : \Type} (f : A -> X) (i : A -> B) (p : isInj i) -> \Sigma (l : B -> X) (l `o` i = f)
+
+\func Prop-isInjective : isInjective \Prop => {?}

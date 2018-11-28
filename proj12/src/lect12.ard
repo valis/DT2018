@@ -1,0 +1,99 @@
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
+
+-- 1. Гомотопический уровень.
+
+-- A : \Type n m => A : \Type (n+1) (m+1)
+-- A : \Prop => A : \Type n m
+
+\func foo => \Prop
+
+\func bar => \Type 30 0
+\func bar' => \Set 30
+
+\func bak => \Type 30 66
+\func bak' => \66-Type 30
+
+\func isProp (A : \Type) => \Pi (x y : A) -> x = y
+
+\func isSet (A : \Type) => \Pi (x y : A) -> isProp (x = y)
+
+\func hasLevel (A : \Type) (n : Nat) : \Type \elim n
+  | 0 => isProp A
+  | suc n => \Pi (x y : A) -> (x = y) `hasLevel` n
+
+\func baz => Nat `hasLevel` 1
+
+-- 2. Вселенные \Prop и \Set и их эквивалентность с подвселенными \Type.
+
+\func Prop1 => \Prop
+\func Prop2 => \Sigma (A : \Type) (isProp A)
+
+\func Prop1-to-Prop2 (P : \Prop) : Prop2 => (P, Path.inProp)
+
+\data Prop2-to-Prop1' (A : \Type) (p : isProp A)
+  | inc A
+  \where \use \level dataIsProp {A : \Type} {p : isProp A} (d1 d2 : Prop2-to-Prop1' A p) : d1 = d2 \elim d1, d2
+                      | inc a1, inc a2 => pmap inc (p a1 a2)
+
+\func Prop2-to-Prop1 (P : Prop2) : \Prop => Prop2-to-Prop1' P.1 P.2
+
+\func Set1 => \Set
+\func Set2 => \Sigma (A : \Type) (isSet A)
+
+-- A : \(n+1)-Type
+-- a,a' : A
+-- a = a' : \n-Type
+
+\func Set1-to-Set2 (P : \Set) : Set2 => (P, \lam _ _ => Path.inProp)
+
+-- A : \Type n m
+-- B : A -> \Type n' m'
+-- (\Pi (x : A) -> B x) : \Type (\max n n') m'
+
+-- 3. \truncated \data, пропозициональное обрезание.
+
+\truncated \data Trunc (A : \Type) : \Prop
+  | trinc A
+
+-- \func ex1 (t : Trunc Nat) : Nat
+--   | trinc n => n
+
+\func ex2 (t : Trunc Nat) : 0 = 0
+  | trinc n => idp
+
+\data Empty
+
+\func Trunc-Empty {A : \Type} (p : A -> Empty) (t : Trunc A) : Empty \elim t
+  | trinc a => p a
+
+\data Bool | true | false
+
+\data T (b : Bool) \with
+  | true => tt
+
+\func T-test (b : Bool) : \Prop => T b
+
+-- 4. Или, существует.
+
+-- \data Either (A B : \Type) | inl A | inr B
+-- \func \fixr 2 Or (A B : \Prop) : \Prop => Trunc (Either A B)
+
+\truncated \data \fixr 2 Or (A B : \Prop) : \Prop
+  | inl A
+  | inr B
+
+\func Or-rec {A B C : \Prop} (f : A -> C) (g : B -> C) (p : A `Or` B) : C \elim p
+  | inl a => f a
+  | inr b => g b
+
+\func exists (A : \Type) (B : A -> \Prop) => Trunc (\Sigma (x : A) (B x))
+
+-- 5. Предикат "тип не пуст".
+
+\data Unit | unit
+
+\func isInhabited (A : \Type) : \Prop => exists A (\lam _ => Unit)
+
+\func isInhabited' (A : \Type) : \Prop => Trunc A
