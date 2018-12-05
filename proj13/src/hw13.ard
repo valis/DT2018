@@ -1,0 +1,64 @@
+\import lect13
+
+-- 1. Определите функцию negPred : Int -> Int такую, что negPred x = x, если x > 0, и negPred x = x - 1, если x <= 0.
+
+\func negPred (x : Int) : Int => {?}
+
+-- 2. Определите функции сложения и умножения для Int.
+
+\func \infixl 6 + (x y : Int) : Int => {?}
+
+\func \infixl 7 * (x y : Int) : Int => {?}
+
+-- 3. Определите тип данных BinNat для бинарных натуральных чисел.
+--    У него должно быть два конструктора: для чисел вида 2*n и чисел вида 2*n+1.
+--    Такой тип данных содержит несколько различных представлений для нуля.
+--    Используйте типы данных с условиями, чтобы вычислительно отождествить различные нули.
+
+\data BinNat
+
+-- 4. Постройте функции Nat -> BinNat и BinNat -> Nat и докажите, что они взаимно обратны.
+
+\func NatToBinNat (n : Nat) : BinNat => {?}
+
+\func BinNatToNat (b : BinNat) : Nat => {?}
+
+\func nbn (n : Nat) : BinNatToNat (NatToBinNat n) = n => {?}
+
+\func bnb (b : BinNat) : NatToBinNat (BinNatToNat b) = b => {?}
+
+-- 5. Докажите, что функция pred сюръективна.
+
+\func pred (n : Nat) : Nat
+  | 0 => 0
+  | suc n => n
+
+\func pred-is-sur : isSur pred => {?}
+
+-- 6. Докажите, что функция suc не сюръективна.
+
+\data Empty
+
+\func suc-is-not-sur (p : isSur suc) : Empty => {?}
+
+-- 7. Пусть f : A -> B и g : B -> C ─ некоторые функции.
+--    Докажите, что если f и g сюръективны, то g `o` f также сюръективна.
+--    Докажите, что если g `o` f сюръективна, то g также сюръективна.
+
+\func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
+
+\func o-sur {A B C : \Type} (f : A -> B) (g : B -> C) (p : isSur f) (q : isSur g) : isSur (g `o` f) => {?}
+
+\func o-sur' {A B C : \Type} (f : A -> B) (g : B -> C) (p : isSur (g `o` f)) : isSur g => {?}
+
+-- 8. Определите множество конечных подмножеств множества A, то есть списков элементов A с точностью до перестановок и повторений элементов.
+
+\func Set (A : \Set) : \Set => {?}
+
+-- 9. Докажите, что функция является биекцией тогда и только тогда, когда она является инъекцией и сюръекцией.
+
+\func isBij {A B : \Type} (f : A -> B) => \Sigma (g : B -> A) (\Pi (x : A) -> g (f x) = x) (\Pi (y : B) -> f (g y) = y)
+
+\func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
+
+\func isBij=isInj+isSur {A B : \Set} (f : A -> B) : isBij f <-> (\Sigma (isInj f) (isSur f)) => {?}

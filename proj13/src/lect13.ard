@@ -1,0 +1,111 @@
+-- X -> (X -> \Prop)
+-- (=) x : X -> \Prop
+-- {x} = {y} -> x = y
+-- f : (X -> \Prop) -> X
+
+-- LEM, f : X -> Y, g : Y -> X, isInj f, isInj g => h : X -> Y, isBij h
+
+-- 1. Сюръективные функции.
+
+\func isInj {A B : \Type} (f : A -> B) => \Pi (x y : A) -> f x = f y -> x = y
+
+\truncated \data Trunc (A : \Type) : \Prop
+  | in A
+
+\func isSur {A B : \Type} (f : A -> B) : \Prop =>
+  \Pi (y : B) -> Trunc (\Sigma (x : A) (f x = y))
+
+-- 2. Лемма про факторизацию.
+
+-- f : A -> B => exists g : A -> C, h : C -> B, h `o` g = f, isSur g, isInj h
+
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+
+\func J
+  {A : \Type} {a : A}
+  (B : \Pi (a' : A) -> a = a' -> \Type)
+  (b : B a idp)
+  {a' : A} (p : a = a')
+  : B a' p
+  => coe (\lam i => B (p @ i) (psqueeze p i)) b right
+  \where {
+    \func squeeze (i j : I) => coe (\lam i => Path (\lam j => left = squeeze1 i j) (path (\lam _ => left)) (path (\lam j => squeeze1 i j))) (path (\lam _ => path (\lam _ => left))) right @ i @ j
+    \func squeeze1 (i j : I) => coe (\lam x => left = x) (path (\lam _ => left)) j @ i
+    \func psqueeze  {A : \Type} {a a' : A} (p : a = a') (i : I) : a = p @ i => path (\lam j => p @ squeeze i j)
+  }
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' =>
+  path (\lam i => f (p @ i))
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' =>
+  coe (\lam i => B (p @ i)) b right
+
+-- Обобщение предыдущего утверждения для зависимых пар.
+\func sigmaInc {A : \Type} (B : A -> \Prop) (t1 t2 : \Sigma (x : A) (B x))
+               (p : t1.1 = t2.1)
+  : t1 = t2
+  => J (\lam a' p' => \Pi (b' : B a') (q' : transport B p' t1.2 = b') -> t1 = (a',b'))
+       (\lam b' q' => pmap (\lam b'' => ((t1.1,b'') : \Sigma (x : A) (B x))) q')
+       p t2.2 (Path.inProp _ _)
+
+\func factorization {A B : \Set} (f : A -> B)
+  : \Sigma (C : \Set) (g : A -> C) (h : C -> B) (\Pi (x : A) -> h (g x) = f x) (isSur g) (isInj h)
+  => (\Sigma (b : B) (Trunc (\Sigma (a : A) (f a = b))),
+      \lam a => (f a, in (a, idp)),
+      \lam p => p.1,
+      \lam a => idp,
+      \lam p => \case p.2 \with { | in q => in (q.1, sigmaInc (\lam b => Trunc (\Sigma (a : A) (f a = b))) (f q.1, in (q.1, idp)) p q.2) },
+      sigmaInc (\lam b => Trunc (\Sigma (a : A) (f a = b)))
+     )
+
+-- 3. Определение Int.
+
+\data Int
+  | pos Nat
+  | neg (n : Nat) \elim n {
+    | 0 => pos 0
+  }
+
+{-
+\func intEx (z : Int) : Nat
+  | pos n => 3
+  | neg n => 7
+-}
+
+\func intEx' (z : Int) : Nat
+  | pos n => 3
+  | neg (suc n) => 7
+
+-- neg 0 => pos 0
+-- neg (suc n)
+
+-- 4. Фактор-множества.
+
+-- A : \Set
+-- ~ : A -> A -> \Prop
+-- A/~ : \Set
+-- in~ : A -> A/~
+-- (in~ a = in~ a') <-> (a ~ a')
+
+-- \func f (x : A/~) : B
+--   | in~ a => b
+
+-- Rat = (\Sigma Int Int) / ~
+-- ((n,m) ~ (n',m')) = (n * m' = n' * m)
+
+\truncated \data Factor (A : \Type) (R : A -> A -> \Prop) : \Set
+  | inR A
+  | eq (a a' : A) (R a a') (i : I) \elim i {
+    | left => inR a
+    | right => inR a'
+  }
+
+\func factorEq {A : \Type} {R : A -> A -> \Prop} (a a' : A) (r : R a a')
+  : inR a = {Factor A R} inR a'
+  => path (eq a a' r)
+
+\func factorEx {A : \Type} {R : A -> A -> \Prop} {B : \Set} (f : A -> B) (p : \Pi (a a' : A) -> R a a' -> f a = f a') (x : Factor A R) : B \elim x
+  | inR a => f a
+  | eq a a' r i => p a a' r @ i
+
+-- (x = x') = { f : I -> X | f left == x, f right == x' }
