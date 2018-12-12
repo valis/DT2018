@@ -1,0 +1,40 @@
+\import lect14
+
+-- 1. Докажите, что (n+m)-элементное множество равно размеченному объединению n- и m-элементных множеств.
+
+-- 2. Докажите, что тип утверждений является множеством.
+
+-- 3. Если B x является множеством, то \Pi (x : A) -> B x тоже является множеством.
+
+\func pi-isSet {A : \Type} (B : A -> \Type) (p : \Pi (x : A) -> isSet (B x)) : isSet (\Pi (x : A) -> B x) => {?}
+
+-- 4. Если A и B x являются множествами, то \Sigma (x : A) (B x) тоже является множеством.
+
+\func sigma-isSet {A : \Type} (B : A -> \Type) (p : isSet A) (q : \Pi (x : A) -> isSet (B x)) : isSet (\Sigma (x : A) (B x)) => {?}
+
+-- 5. Если A и B являются множествами, то A `Or` B тоже является множеством.
+
+\data \fixr 2 Or (A B : \Type)
+  | inl A
+  | inr B
+
+\func or-isSet {A B : \Type} (p : isSet A) (q : isSet B) : isSet (Or A B) => {?}
+
+-- 6. Докажите теорему Хедберга, которая говорит, что если равенство на типе разрешимо, то этот тип является множеством.
+
+\func Hedberg {A : \Type} (p : \Pi (x y : A) -> (x = y) `Or` Not (x = y)) : isSet A => {?}
+
+-- 7. Докажите, что (Bool = Bool) = Bool.
+
+\func BoolAut : (Bool = Bool) = Bool => {?}
+
+-- 8. Тип X называется инъективным, если для любой функции f : A -> X и любой инъекции i : A -> B сущесвует функция l : B -> X такая, что l `o` i = f.
+--    Докажите, что \Prop инъективен.
+
+\func isInj {A B : \Type} (f : A -> B) => \Pi (x y : A) -> f x = f y -> x = y
+
+\func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
+
+\func isInjective (X : \Type) => \Pi {A B : \Type} (f : A -> X) (i : A -> B) (p : isInj i) -> \Sigma (l : B -> X) (l `o` i = f)
+
+\func Prop-isInjective : isInjective \Prop => {?}

@@ -1,0 +1,177 @@
+\data Empty
+
+\func absurd {A : \Type} (x : Empty) : A
+
+\func Not (A : \Type) => A -> Empty
+
+\func idp  {A : \Type} {a : A} => path (\lam _ => a)
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' =>
+  path (\lam i => f (p @ i))
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' =>
+  coe (\lam i => B (p @ i)) b right
+
+\func J
+  {A : \Type} {a : A}
+  (B : \Pi (a' : A) -> a = a' -> \Type)
+  (b : B a idp)
+  {a' : A} (p : a = a')
+  : B a' p
+  => coe (\lam i => B (p @ i) (psqueeze p i)) b right
+  \where {
+    \func squeeze (i j : I) => coe (\lam i => Path (\lam j => left = squeeze1 i j) (path (\lam _ => left)) (path (\lam j => squeeze1 i j))) (path (\lam _ => path (\lam _ => left))) right @ i @ j
+    \func squeeze1 (i j : I) => coe (\lam x => left = x) (path (\lam _ => left)) j @ i
+    \func psqueeze  {A : \Type} {a a' : A} (p : a = a') (i : I) : a = p @ i => path (\lam j => p @ squeeze i j)
+  }
+
+-- 1. Равенство типов, iso.
+
+-- (f = g) = (\Pi (x : A) -> f x = g x)
+-- A,B : \Type
+-- A = B
+
+-- P : (A -> B) -> \Prop
+-- ? : P f -> P g
+
+-- Bool = Nat -> Empty
+-- ? : Maybe Unit = Bool
+-- ? : (\Sigma Nat Nat) = Nat
+
+\func Equiv (A B : \Type) => \Sigma (f : A -> B)
+                                    (g : B -> A)
+                                    (\Pi (x : A) -> g (f x) = x)
+                                    (\Pi (y : B) -> f (g y) = y)
+
+\func equality=>equivalence (A B : \Type) (p : A = B) : Equiv A B =>
+  transport (Equiv A) p (\lam x => x, \lam x => x, \lam x => idp, \lam x => idp)
+
+\func equivalence=>equality (A B : \Type) (e : Equiv A B) : A = B =>
+  path (iso e.1 e.2 e.3 e.4)
+
+-- coe (A : I -> \Type) (a : A left) (i : I) : A i
+-- \lam a => coe (iso f g p q) a right : A -> B
+
+-- coe (iso f g p q) a right == a
+\func test (A B : \Type) (e : Equiv A B)
+  : transport (\lam X => X) (equivalence=>equality A B e) = e.1
+  => idp
+
+-- 2. Пример применения унивалентности.
+
+\data Dec (E : \Type)
+  | yes E
+  | no (Not E)
+
+\func DecEq (A : \Type) => \Pi (x y : A) -> Dec (x = y)
+
+\func NatDecEq : DecEq Nat => {?}
+
+\func isCountable (X : \Type) => Equiv Nat X
+
+\func countableDecEq (X : \Type) (p : isCountable X) : DecEq X =>
+  transport DecEq (equivalence=>equality Nat X p) NatDecEq
+
+-- 3. Пропозициональная экстенсиональность.
+
+\func propExt (A B : \Prop) (f : A -> B) (g : B -> A) : A = B =>
+  equivalence=>equality A B (f, g, \lam x => Path.inProp _ _, \lam y => Path.inProp _ _)
+
+-- 4. \Set не является множеством.
+
+\func isSet (A : \Type) => \Pi (x y : A) -> \Pi (p q : x = y) -> p = q
+
+\data Bool | true | false
+
+\func not (b : Bool) : Bool
+  | true => false
+  | false => true
+
+\func not-not (b : Bool) : not (not b) = b
+  | true => idp
+  | false => idp
+
+\data T (b : Bool) \with
+  | true => tt
+
+\func T-absurd {A : \Type} (t : T false) : A
+
+\func true/=false (p : true = false) : Empty => T-absurd (transport T p tt)
+
+\func Set-isNotSet (p : isSet \Set) : Empty =>
+  \let | idp=not => p Bool Bool idp (equivalence=>equality Bool Bool (not, not, not-not, not-not))
+       | id=not : (\lam x => x) = not => pmap (transport (\lam X => X)) idp=not
+  \in true/=false (pmap (\lam f => f true) id=not)
+
+-- 5. Свойства операций над =.
+
+\func \infixr 6 * {A : \Type} {x y z : A} (p : x = y) (q : y = z) : x = z =>
+  transport (\lam t => x = t) q p
+
+\func idp-right {A : \Type} {x y : A} (p : x = y) : p * idp = p => idp
+
+\func idp-left {A : \Type} {x y : A} (p : x = y) : idp * p = p =>
+  J (\lam y' p' => idp * p' = p') idp p
+
+\func *-assoc {A : \Type} {x y z w : A} (p : x = y) (q : y = z) (r : z = w)
+  : (p * q) * r = p * (q * r)
+  => J (\lam w' r' => (p * q) * r' = p * (q * r')) idp r
+
+\func inv {A : \Type} {x y : A} (p : x = y) : y = x =>
+  transport (\lam t => t = x) p idp
+
+\func inv-left {A : \Type} {x y : A} (p : x = y) : inv p * p = idp =>
+  J (\lam y' p' => inv p' * p' = idp) idp p
+
+\func inv-right {A : \Type} {x y : A} (p : x = y) : p * inv p = idp =>
+  J (\lam y' p' => p' * inv p' = idp) idp p
+
+-- Для = верны и другие свойства групп.
+\func cancelLeft {A : \Type} {x y z : A} (p : x = y) (q r : y = z) (s : p * q = p * r) : q = r =>
+  inv (idp-left q) * pmap (\lam t => t * q) (inv (inv-left p)) * *-assoc (inv p) p q * pmap (inv p *) s * inv (*-assoc (inv p) p r) * pmap (\lam t => t * r) (inv-left p) * idp-left r
+
+-- 6. Утверждения являются множествами.
+
+\func isProp (A : \Type) => \Pi (x y : A) -> x = y
+
+\func isProp=>isSet (A : \Type) (t : isProp A) : isSet A =>
+  \let f (x y : A) (p : x = y) : t x y * inv (t y y) = p =>
+          J (\lam y' p' => t x y' * inv (t y' y') = p') (inv-right (t x x)) p
+  \in \lam x y p q => inv (f x y p) * f x y q
+
+-- 7. Лемма про эквивалентность равенств.
+
+-- A : \Type
+-- R : A -> A -> \Type
+-- R-isProp : \Pi (x y : A) -> isProp (R x y)
+-- R-isRefl : \Pi (x : A) -> R x x
+-- R-implies= : \Pi {x y : A} -> R x y -> x = y
+-- Then A is set
+
+-- R is reflexive <=> =-impliesR : \Pi {x y : A} -> x = y -> R x y
+
+-- Цель: доказать, что \Pi {x y : A} (p : x = y) -> R-implies= (=-impliesR p) = p
+
+-- H : \Pi {x y : A} -> x = y -> x = y
+-- H p => R-implies= (=-impliesR p)
+
+-- Новая цель: H idp = idp
+
+-- Мы знаем, что для всех p : x = y верно, что H (H p) = H p
+-- Мы знаем, что для всех p : x = y верно, что H p = H idp * p
+-- Отсюда следует новая цель.
+
+\func SetLemma {A : \Type}
+               (R : A -> A -> \Type)
+               (R-isProp : \Pi (x y : A) -> isProp (R x y))
+               (R-isRefl : \Pi (x : A) -> R x x)
+               (R-implies= : \Pi {x y : A} -> R x y -> x = y)
+               : isSet A =>
+  \let | =-impliesR {x y : A} (p : x = y) : R x y => transport (R x) p (R-isRefl x)
+       | R=R {x y : A} (p : R x y) : =-impliesR (R-implies= p) = p => R-isProp x y _ _
+       | H {x y : A} (p : x = y) => R-implies= (=-impliesR p)
+       | H-isIdemp {x y : A} (p : x = y) : H (H p) = H p => pmap R-implies= (R=R _)
+       | H-property {x y : A} (p : x = y) : H p = H idp * p => J (\lam _ p' => H p' = H idp * p') idp p
+       | H-idp {x : A} : H {x} idp = idp => cancelLeft (H idp) (H idp) idp (inv (H-property (H idp)) * H-isIdemp idp)
+       | H-isId {x y : A} (p : x = y) : H p = p => J (\lam _ p' => H p' = p') H-idp p
+  \in \lam x y p q => inv (H-isId p) * pmap R-implies= (R-isProp x y (=-impliesR p) (=-impliesR q)) * H-isId q
