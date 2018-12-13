@@ -4,6 +4,8 @@
 
 -- 2. Докажите, что тип утверждений является множеством.
 
+\func prop-isSet : isSet \Prop => {?}
+
 -- 3. Если B x является множеством, то \Pi (x : A) -> B x тоже является множеством.
 
 \func pi-isSet {A : \Type} (B : A -> \Type) (p : \Pi (x : A) -> isSet (B x)) : isSet (\Pi (x : A) -> B x) => {?}
